@@ -351,9 +351,136 @@
     padding:11px 16px;border-radius:12px;font-size:13px;font-weight:600;
     box-shadow:0 12px 30px rgba(0,0,0,.5);
     opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
-    z-index:100;max-width:calc(100% - 32px);text-align:center;
+    z-index:140;max-width:calc(100% - 32px);text-align:center;
   }
   .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* ---------- 카메라 스캔 ---------- */
+  .chip.scan{
+    background:rgba(102,166,255,.13);border-color:rgba(102,166,255,.42);
+    color:#c2dbff;font-weight:700;
+  }
+  .chip.scan:hover{background:rgba(102,166,255,.22);border-color:rgba(102,166,255,.62);color:#e6efff}
+  .chip.scan .ic{font-size:14px;line-height:1}
+
+  .scan{
+    position:fixed;inset:0;z-index:130;display:none;flex-direction:column;
+    background:#04060a;color:#fff;
+  }
+  .scan.open{display:flex}
+  .scan-bar{
+    flex:none;display:flex;align-items:flex-start;gap:10px;
+    padding:calc(8px + env(safe-area-inset-top)) 12px 8px;
+    background:#05070c;border-bottom:1px solid #1b2133;
+  }
+  .scan-title{flex:1;min-width:0;font-size:14px;font-weight:750;letter-spacing:.2px}
+  .scan-title small{display:block;margin-top:2px;font-size:11px;font-weight:500;color:#8b94ae;line-height:1.4}
+  .scan-close{
+    flex:none;width:40px;height:40px;border-radius:12px;
+    background:rgba(255,255,255,.09);color:#fff;font-size:16px;
+    display:grid;place-items:center;
+  }
+  .scan-close:hover{background:rgba(255,255,255,.16)}
+
+  .scan-stage{position:relative;flex:1;min-height:0;background:#000;overflow:hidden}
+  #scanVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+  .scan-guide{
+    position:absolute;left:6%;right:6%;bottom:8%;height:30%;
+    border:2px dashed rgba(226,192,125,.9);border-radius:16px;
+    box-shadow:0 0 0 9999px rgba(0,0,0,.34), inset 0 0 26px rgba(226,192,125,.08);
+    pointer-events:none;
+  }
+  .scan-guide i{position:absolute;width:22px;height:22px;border:3px solid var(--gold)}
+  .scan-guide i.tl{left:-3px;top:-3px;border-right:0;border-bottom:0;border-radius:12px 0 0 0}
+  .scan-guide i.tr{right:-3px;top:-3px;border-left:0;border-bottom:0;border-radius:0 12px 0 0}
+  .scan-guide i.bl{left:-3px;bottom:-3px;border-right:0;border-top:0;border-radius:0 0 0 12px}
+  .scan-guide i.br{right:-3px;bottom:-3px;border-left:0;border-top:0;border-radius:0 0 12px 0}
+  .scan-guide-label{
+    position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+    width:max-content;max-width:86vw;text-align:center;
+    background:rgba(6,8,14,.82);border:1px solid rgba(226,192,125,.4);
+    color:#ffe3ab;font-size:11.5px;font-weight:700;line-height:1.4;
+    padding:5px 10px;border-radius:10px;
+  }
+
+  .scan-status{
+    position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:2;
+    display:flex;align-items:center;gap:8px;
+    max-width:calc(100% - 24px);padding:8px 14px;border-radius:999px;
+    background:rgba(6,8,14,.86);border:1px solid #2b3348;
+    font-size:12px;font-weight:650;color:#e3e9f7;line-height:1.4;
+  }
+  .scan-status[hidden]{display:none}
+  .scan-status.err{border-color:rgba(239,95,107,.5);color:#ffc3c8}
+  .scan-status.still .spin{display:none}
+  .spin{
+    flex:none;width:14px;height:14px;border-radius:50%;
+    border:2px solid rgba(255,255,255,.22);border-top-color:var(--gold);
+    animation:scan-spin .8s linear infinite;
+  }
+  @keyframes scan-spin{to{transform:rotate(360deg)}}
+
+  .scan-dialog{
+    position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;
+    padding:16px;background:rgba(3,5,10,.62);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  }
+  .scan-dialog[hidden]{display:none}
+  .scan-card{
+    width:100%;max-width:380px;max-height:100%;overflow:auto;
+    background:#101523;border:1px solid #2b3450;border-radius:18px;
+    padding:18px 16px 15px;box-shadow:0 24px 60px rgba(0,0,0,.65);
+    animation:scan-pop .16s ease-out;
+  }
+  @keyframes scan-pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+  .sc-rar-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .sc-no{font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1;color:#fff}
+  .sc-rar{
+    font-size:11px;font-weight:800;letter-spacing:.3px;padding:4px 10px;border-radius:999px;
+    border:1px solid currentColor;background:rgba(255,255,255,.04);
+  }
+  .sc-rar.rar-common{color:var(--rar-common)}
+  .sc-rar.rar-uncommon{color:var(--rar-uncommon)}
+  .sc-rar.rar-rare{color:var(--rar-rare)}
+  .sc-rar.rar-epic{color:var(--rar-epic);background:rgba(185,140,255,.10)}
+  .sc-rar.rar-showcase{color:var(--rar-showcase)}
+  .sc-rar.rar-overnumber{color:var(--rar-overnumber)}
+  .sc-ko{font-size:20px;font-weight:800;line-height:1.3;margin-bottom:3px;color:#fff}
+  .sc-en{font-size:12.5px;color:#98a2bb}
+  .sc-meta{margin-top:9px;font-size:11.5px;color:#7d879f;line-height:1.5}
+  .sc-raw{margin-top:10px;font-size:11px;color:#5f6980;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+  .sc-msg{font-size:13px;color:#c7cfe2;line-height:1.6;white-space:pre-line}
+  .sc-msg b{color:#fff}
+  .sc-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:8px}
+  .sc-btns{display:flex;gap:8px;margin-top:14px}
+  .sc-btns .btn{flex:1 1 0;min-width:0;min-height:50px;font-size:14px;padding:0 8px}
+  .sc-again{width:100%;margin-top:8px;min-height:44px;font-size:13px}
+  .sc-alts{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11.5px;color:#7d879f}
+  .sc-alts button{
+    font-size:12px;font-weight:700;color:#c2dbff;border:1px solid rgba(102,166,255,.4);
+    background:rgba(102,166,255,.1);border-radius:999px;padding:6px 11px;min-height:34px;
+  }
+
+  .scan-foot{
+    flex:none;display:flex;align-items:center;gap:8px;
+    padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:#05070c;border-top:1px solid #1b2133;
+  }
+  .scan-shutter{
+    flex:1 1 auto;min-width:0;min-height:56px;border-radius:16px;
+    background:linear-gradient(150deg,#e8ca8b,#c49a4b 70%);color:#20180a;
+    font-size:15px;font-weight:800;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .scan-shutter:disabled{opacity:.55}
+  .scan-shutter:active{transform:translateY(1px)}
+  .scan-toggle{
+    flex:none;min-height:48px;padding:0 12px;border-radius:14px;
+    border:1px solid #2b3348;background:#111624;color:#b9c2d8;
+    font-size:12px;font-weight:700;white-space:nowrap;
+  }
+  .scan-toggle[aria-pressed="true"]{background:rgba(102,166,255,.16);border-color:rgba(102,166,255,.5);color:#c2dbff}
+  .scan-toggle[hidden]{display:none}
 
   footer.foot{
     margin-top:18px;padding:14px 4px 4px;color:var(--dim);font-size:11.5px;line-height:1.7;
@@ -550,6 +677,7 @@
       <button class="chip toggle banned" id="hideBanned" aria-pressed="false">밴 카드 제외 <b id="banCount">2</b></button>
       <button class="chip" id="resetFilters">필터 초기화</button>
     </div>
+    <button class="chip scan" id="btnScan" aria-label="카메라로 카드 번호 스캔"><span class="ic" aria-hidden="true">📷</span> 카메라 스캔</button>
     <div class="spacer"></div>
     <div class="sortwrap">
       <label for="sort">정렬</label>
@@ -608,11 +736,36 @@
     <br><b>금액</b> — (일반 보유 + Foil 보유) × 단가로 계산하고, 순수익은 이베이 수수료 약 14%를 뺀 값입니다. 실제 정산은 카테고리·셀러 등급에 따라 조금 다릅니다.
     <br><b>수량 칸</b> — Rare·Epic·Showcase·Overnumber는 부스터 팩에서 Foil로만 나오므로 <b>Foil 수량 칸 하나만</b> 표시합니다. 예전에 일반 수량으로 넣어 둔 값은 페이지를 열 때 Foil 수량으로 합산됩니다.
     <br><b>카드 데이터</b> — Riftbound: Origins(OGN) 298장 + 대체 아트 30장 + 오버넘버 12장. 카드명·번호는 <a href="https://decks.kr/cards/set/ogn" target="_blank" rel="noopener">decks.kr</a> 한글판 표기, 희귀도는 <a href="https://riftwatch.gg/sets/ogn/" target="_blank" rel="noopener">Riftwatch</a>·CardOwners 대조. 2026-11-17 기준.
+    <br><b>카메라 스캔</b> — 상단 ‘📷 카메라 스캔’에서 카드 하단 번호(예: 039/298 · OGN-039)를 박스 안에 맞추면 번호를 읽어 수량을 바로 올릴 수 있습니다. 인식은 기기 안에서만 하고 사진을 서버로 보내지 않습니다.
     <br><b>밴</b> — 미끼 갈고리(242)·눈부신 오로라(160)는 글로벌 스탠다드 밴 카드입니다. 기본 화면에는 <b>BANNED</b> 배지와 함께 그대로 보이고, 판매할 때 걸러내고 싶으면 ‘밴 카드 제외’를 눌러 숨깁니다.
   </footer>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- 카메라 카드 스캔 (전체 화면) -->
+<div class="scan" id="scanModal" role="dialog" aria-modal="true" aria-label="카메라 카드 스캔" aria-hidden="true">
+  <div class="scan-bar">
+    <div class="scan-title">📷 카드 하단 번호 스캔<small id="scanHint">박스 안에 번호가 오도록 비추면 자동으로 읽어요</small></div>
+    <button class="scan-close" id="scanClose" type="button" aria-label="스캔 닫기">✕</button>
+  </div>
+
+  <div class="scan-stage" id="scanStage">
+    <video id="scanVideo" playsinline webkit-playsinline autoplay muted></video>
+    <div class="scan-guide" id="scanGuide">
+      <span class="scan-guide-label">카드 하단 번호(예: 039/298 · 202a/298 · OGN-039)를<br>이 박스 안에 맞춰주세요</span>
+      <i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>
+    </div>
+    <div class="scan-status" id="scanStatus" hidden><span class="spin" aria-hidden="true"></span><span id="scanStatusText"></span></div>
+    <div class="scan-dialog" id="scanDialog" hidden></div>
+  </div>
+
+  <div class="scan-foot">
+    <button class="scan-toggle" id="scanAuto" type="button" aria-pressed="true">자동</button>
+    <button class="scan-shutter" id="scanShoot" type="button">📸 지금 인식</button>
+    <button class="scan-toggle" id="scanTorch" type="button" aria-pressed="false" hidden>💡 라이트</button>
+  </div>
+</div>
 <noscript><p style="padding:20px;color:#fff">이 페이지는 JavaScript가 필요합니다.</p></noscript>
 
 <script>
@@ -1619,6 +1772,664 @@ function doImportText(text){
   toast(n+'종 기록을 불러왔어요' + (movedFoil ? ' (Rare 이상 일반 수량 '+movedFoil+'종 → Foil)' : ''));
 }
 
+/* ============================================================
+   카메라 카드 스캔 (Tesseract.js OCR)
+   - 평소에는 아무것도 받지 않고, 처음 ‘📷 카메라 스캔’을 눌렀을 때만
+     CDN에서 Tesseract.js를 동적으로 불러온다.
+   - 인식은 전부 기기 안에서 돌고 사진을 서버로 보내지 않는다.
+   ============================================================ */
+const SCAN_CDN = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+const SCAN_WHITELIST = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/-* ';
+
+/* --- SCAN CORE START: DOM 없는 순수 함수 (단위 테스트 대상) --- */
+const SCAN_DIGIT_MAP = {O:'0',Q:'0',D:'0',U:'0',S:'5',B:'8',Z:'2',G:'6',T:'7',I:'1',L:'1',J:'1',E:'8',R:'8',A:'4'};
+
+/* OCR이 숫자를 비슷한 글자로 읽은 경우(O→0, S→5 …)를 숫자로 되돌린다 */
+function scanFixDigits(str){
+  return String(str).toUpperCase().split('').map(function(ch){
+    return SCAN_DIGIT_MAP[ch] || ch;
+  }).join('');
+}
+
+function scanNormalize(text){
+  return String(text == null ? '' : text)
+    .replace(/[\uFF10-\uFF19]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
+    .replace(/[\u2010-\u2015\u2212]/g, '-')
+    .replace(/[|｜]/g, '/')
+    .replace(/[^0-9A-Za-z\/\-*\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toUpperCase();
+}
+
+/* 카드 번호 → CARDS의 키 (039 → 39, 007a → 7a, 299 → 299) */
+function scanKey(num){
+  var m = /^(\d{1,3})([a-z]?)$/.exec(String(num).toLowerCase());
+  if(!m) return null;
+  var n = parseInt(m[1], 10);
+  if(!isFinite(n) || n < 1) return null;
+  return String(n) + (m[2] || '');
+}
+
+/* 인식된 텍스트 → 후보 번호 키 목록 (높은 우선순위 → 낮은 우선순위, 같은 순위는 등장순) */
+function scanExtractCandidates(text, has){
+  var s = scanNormalize(text);
+  var found = [];
+  var spans = [];
+  var m;
+
+  function masked(){
+    var a = s.split('');
+    for(var i = 0; i < spans.length; i++){
+      for(var j = spans[i][0]; j < spans[i][1] && j < a.length; j++) a[j] = ' ';
+    }
+    return a.join('');
+  }
+  function push(pos, num, prio){
+    var key = scanKey(num);
+    if(!key) return;
+    if(has && !has(key)) return;
+    found.push({ key: key, prio: prio, pos: pos });
+  }
+
+  /* 1) 039/298 · 202a/298 · 299/298 (분모가 298 근처일 때만) */
+  var reSlash = /([0-9OQDSBGZTU]{1,3})\s*([Aa]?)\s*\/\s*([0-9OQDSBGZTU]{2,3})/g;
+  while((m = reSlash.exec(s)) !== null){
+    var den = parseInt(scanFixDigits(m[3]), 10);
+    if(den >= 180 && den <= 420){
+      push(m.index, scanFixDigits(m[1]) + (m[2] || '').toLowerCase(), 100);
+    }
+    spans.push([m.index, m.index + m[0].length]);
+  }
+
+  /* 2) OGN-039 · OGN039 · 0GN 39 */
+  var s2 = masked();
+  var reOgn = /[O0][G6][NM]\s*[-_*.]?\s*([0-9OQDSBGZTU]{1,3})\s*([Aa]?)/g;
+  while((m = reOgn.exec(s2)) !== null){
+    push(m.index, scanFixDigits(m[1]) + (m[2] || '').toLowerCase(), 90);
+    spans.push([m.index, m.index + m[0].length]);
+  }
+
+  /* 3) 번호만 찍힌 경우 (298 · 39 · 007a) */
+  var s3 = masked();
+  var reTok = /(?:^|[^0-9A-Z])([0-9OQDSBGZTU]{1,3})([Aa]?)(?=$|[^0-9A-Z])/g;
+  while((m = reTok.exec(s3)) !== null){
+    var num = scanFixDigits(m[1]);
+    if(!/^\d{1,3}$/.test(num)) continue;
+    var suffix = (m[2] || '').toLowerCase();
+    if(!suffix && num.length < 2) continue;
+    var prio = num.length === 3 ? 40 : 20;
+    if(suffix) prio = 50;
+    push(m.index, num + suffix, prio);
+  }
+
+  /* 같은 카드는 가장 높은 우선순위만 남긴다 */
+  var best = {}, keys = [];
+  for(var i = 0; i < found.length; i++){
+    var f = found[i];
+    if(!best[f.key]){ best[f.key] = f; keys.push(f.key); }
+    else if(best[f.key].prio < f.prio){ best[f.key] = f; }
+  }
+  keys.sort(function(a, b){
+    return (best[b].prio - best[a].prio) || (best[a].pos - best[b].pos);
+  });
+  return keys.map(function(k){ return { key: k, prio: best[k].prio }; });
+}
+/* --- SCAN CORE END --- */
+
+/* 카드 번호 인덱스: "039" → "39", "007a" → "7a" */
+const SCAN_INDEX = {};
+CARDS.forEach(function(c){
+  SCAN_INDEX[c.num.toLowerCase().replace(/^0+(?=\d)/, '')] = c;
+});
+function scanHasKey(k){ return !!SCAN_INDEX[k]; }
+
+function scanMatchCards(text){
+  var out = [];
+  scanExtractCandidates(text, scanHasKey).forEach(function(hit){
+    var c = SCAN_INDEX[hit.key];
+    if(c && !out.some(function(o){ return o.id === c.id; })) out.push(c);
+  });
+  return out;
+}
+
+/* ---------- 프레임 준비(흑백 + 대비 확장) ---------- */
+function scanPrepCanvas(cvs){
+  var ctx = cvs.getContext('2d');
+  var img = ctx.getImageData(0, 0, cvs.width, cvs.height);
+  var d = img.data, n = (d.length / 4) | 0;
+  var grays = new Uint8Array(n), hist = new Uint32Array(256);
+  var i, g, acc;
+  for(i = 0; i < n; i++){
+    g = (d[i * 4] * 0.299 + d[i * 4 + 1] * 0.587 + d[i * 4 + 2] * 0.114) | 0;
+    grays[i] = g; hist[g]++;
+  }
+  var cut = Math.max(1, Math.round(n * 0.02)), lo = 0, hi = 255;
+  acc = 0;
+  for(i = 0; i < 256; i++){ acc += hist[i]; if(acc >= cut){ lo = i; break; } }
+  acc = 0;
+  for(i = 255; i >= 0; i--){ acc += hist[i]; if(acc >= cut){ hi = i; break; } }
+  if(hi - lo < 24){ lo = 0; hi = 255; }
+  for(i = 0; i < n; i++){
+    var v = ((grays[i] - lo) * 255 / (hi - lo)) | 0;
+    v = v < 0 ? 0 : (v > 255 ? 255 : v);
+    d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = v;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return cvs;
+}
+
+/* 반사로 밝게 날아간 카드는 밝은 글자/어두운 바탕일 수 있어 반전본도 한 번 본다 */
+function scanInvertCanvas(cvs){
+  var ctx = cvs.getContext('2d');
+  var img = ctx.getImageData(0, 0, cvs.width, cvs.height);
+  var d = img.data;
+  for(var i = 0; i < d.length; i += 4){
+    d[i] = 255 - d[i]; d[i + 1] = 255 - d[i + 1]; d[i + 2] = 255 - d[i + 2];
+  }
+  ctx.putImageData(img, 0, 0);
+  return cvs;
+}
+
+/* ---------- 카메라 스캔 상태 ---------- */
+var SCAN = {
+  els: null, stream: null, track: null,
+  worker: null, workerReady: false, workerPromise: null,
+  isOpen: false, busy: false,
+  auto: true, autoTimer: null, resumeAuto: false, torchOn: false,
+  candidates: [], currentCard: null, lastText: ''
+};
+
+function scanUI(){
+  if(SCAN.els) return SCAN.els;
+  SCAN.els = {
+    modal: document.getElementById('scanModal'),
+    video: document.getElementById('scanVideo'),
+    stage: document.getElementById('scanStage'),
+    guide: document.getElementById('scanGuide'),
+    status: document.getElementById('scanStatus'),
+    statusText: document.getElementById('scanStatusText'),
+    dialog: document.getElementById('scanDialog'),
+    shutter: document.getElementById('scanShoot'),
+    autoBtn: document.getElementById('scanAuto'),
+    torchBtn: document.getElementById('scanTorch')
+  };
+  return SCAN.els;
+}
+
+function scanSetStatus(msg, opts){
+  var ui = scanUI();
+  opts = opts || {};
+  if(!msg){ ui.status.hidden = true; return; }
+  ui.status.hidden = false;
+  ui.status.classList.toggle('err', !!opts.err);
+  ui.status.classList.toggle('still', !opts.spin);
+  ui.statusText.textContent = msg;
+}
+
+/* ---------- 열기 / 닫기 ---------- */
+function scanOpen(){
+  var ui = scanUI();
+  SCAN.isOpen = true;
+  SCAN.candidates = [];
+  SCAN.currentCard = null;
+  SCAN.lastText = '';
+  SCAN.resumeAuto = false;
+  ui.dialog.hidden = true;
+  ui.dialog.innerHTML = '';
+  ui.modal.classList.add('open');
+  ui.modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  scanSetStatus('카메라 준비 중…', { spin: true });
+  scanSyncAutoBtn();
+  scanStartCamera();
+  /* 카메라와 동시에 OCR 엔진도 미리 준비 (실패하면 촬영할 때 다시 시도) */
+  scanEnsureWorker().catch(function(){});
+}
+
+function scanClose(){
+  var ui = scanUI();
+  SCAN.isOpen = false;
+  scanStopAuto();
+  if(SCAN.stream){
+    try{ SCAN.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  }
+  SCAN.stream = null;
+  SCAN.track = null;
+  SCAN.torchOn = false;
+  try{ ui.video.pause(); }catch(e){}
+  ui.video.srcObject = null;
+  ui.dialog.hidden = true;
+  ui.dialog.innerHTML = '';
+  ui.modal.classList.remove('open');
+  ui.modal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  scanSetStatus(null);
+  SCAN.busy = false;
+}
+
+/* ---------- 카메라 ---------- */
+async function scanStartCamera(){
+  var ui = scanUI();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    scanShowError(
+      '카메라를 쓸 수 없는 환경이에요',
+      '카메라는 https 주소에서만 열립니다.\n아이폰은 Safari로 https://fkrhkd507.github.io/riftbound-inventory/ 를 열어 주세요.\n아래 ‘직접 번호 검색’으로 번호를 입력해 재고를 추가할 수도 있어요.'
+    );
+    return;
+  }
+  try{
+    var stream;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+      });
+    }catch(err){
+      if(err && (err.name === 'OverconstrainedError' || err.name === 'ConstraintNotSatisfiedError')){
+        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+      } else {
+        throw err;
+      }
+    }
+    if(!SCAN.isOpen){
+      stream.getTracks().forEach(function(t){ t.stop(); });
+      return;
+    }
+    SCAN.stream = stream;
+    SCAN.track = stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+    ui.video.srcObject = stream;
+    try{ await ui.video.play(); }catch(e){}
+    scanDetectTorch();
+    if(SCAN.torchOn && SCAN.track){
+      try{ await SCAN.track.applyConstraints({ advanced: [{ torch: true }] }); }catch(e){}
+    }
+    scanSetStatus(SCAN.auto ? '번호를 박스 안에 맞춰 주세요 · 자동 인식 중' : '번호를 박스 안에 맞추고 📸 지금 인식을 눌러 주세요');
+    if(SCAN.auto) scanStartAuto();
+  }catch(err){
+    scanCameraError(err);
+  }
+}
+
+function scanDetectTorch(){
+  var ui = scanUI();
+  var caps = null;
+  try{ caps = (SCAN.track && SCAN.track.getCapabilities) ? SCAN.track.getCapabilities() : null; }catch(e){}
+  ui.torchBtn.hidden = !(caps && caps.torch);
+}
+
+async function scanToggleTorch(){
+  var ui = scanUI();
+  if(!SCAN.track) return;
+  try{
+    SCAN.torchOn = !SCAN.torchOn;
+    await SCAN.track.applyConstraints({ advanced: [{ torch: SCAN.torchOn }] });
+    ui.torchBtn.setAttribute('aria-pressed', SCAN.torchOn ? 'true' : 'false');
+  }catch(e){
+    SCAN.torchOn = false;
+    ui.torchBtn.setAttribute('aria-pressed', 'false');
+    scanSetStatus('이 기기에서는 라이트를 켤 수 없어요', { err: true });
+  }
+}
+
+function scanCameraError(err){
+  var name = (err && err.name) || 'Error';
+  if(name === 'NotAllowedError' || name === 'SecurityError'){
+    scanShowError('카메라 권한이 꺼져 있어요',
+      '아이폰 Safari에서는 주소창 왼쪽 ‘가’ 아이콘 → 카메라 → 허용을 골라 주세요.\n설정 앱 > Safari > 카메라에서도 허용으로 바꿀 수 있습니다.\n허용한 뒤 위 ‘다시 시도’를 눌러 주세요.');
+  } else if(name === 'NotFoundError' || name === 'DevicesNotFoundError'){
+    scanShowError('카메라를 찾지 못했어요',
+      '이 기기(또는 브라우저)에 쓸 수 있는 카메라가 없습니다.\n휴대폰에서 열거나 ‘직접 번호 검색’으로 번호를 입력해 추가해 주세요.');
+  } else if(name === 'NotReadableError' || name === 'TrackStartError' || name === 'AbortError'){
+    scanShowError('카메라를 열 수 없어요',
+      '다른 앱이 카메라를 쓰고 있을 수 있어요.\n카메라·영상통화 앱을 닫고 ‘다시 시도’를 눌러 주세요.');
+  } else {
+    scanShowError('카메라를 열지 못했어요',
+      '잠시 뒤 ‘다시 시도’를 눌러 주세요. 계속 안 되면 ‘직접 번호 검색’을 써 주세요.\n(' + String(name) + ')');
+  }
+}
+
+function scanShowError(title, message){
+  var ui = scanUI();
+  scanStopAuto();
+  ui.dialog.innerHTML = '<div class="scan-card">'
+    + '<div class="sc-title">' + esc(title) + '</div>'
+    + '<p class="sc-msg">' + esc(message) + '</p>'
+    + '<div class="sc-btns">'
+      + '<button class="btn" data-scan="retry">다시 시도</button>'
+      + '<button class="btn ghost" data-scan="search">직접 번호 검색</button>'
+    + '</div>'
+    + '<button class="btn ghost sc-again" data-scan="close">닫기</button>'
+  + '</div>';
+  ui.dialog.hidden = false;
+  scanSetStatus(null);
+}
+
+/* ---------- Tesseract.js 지연 로드 ---------- */
+function scanLoadScript(src){
+  return new Promise(function(resolve, reject){
+    if(window.Tesseract) return resolve();
+    var existing = document.getElementById('scanTessScript');
+    if(existing && existing.dataset.state === 'loading'){
+      existing.addEventListener('load', function(){ resolve(); });
+      existing.addEventListener('error', function(){ reject(new Error('script-load-failed')); });
+      return;
+    }
+    if(existing && existing.parentNode) existing.parentNode.removeChild(existing);
+    var s = document.createElement('script');
+    s.id = 'scanTessScript';
+    s.src = src;
+    s.async = true;
+    s.dataset.state = 'loading';
+    s.onload = function(){ s.dataset.state = 'ok'; resolve(); };
+    s.onerror = function(){
+      s.dataset.state = 'error';
+      if(s.parentNode) s.parentNode.removeChild(s);
+      reject(new Error('script-load-failed'));
+    };
+    document.head.appendChild(s);
+  });
+}
+
+async function scanEnsureWorker(){
+  if(SCAN.workerReady && SCAN.worker) return SCAN.worker;
+  if(SCAN.workerPromise) return SCAN.workerPromise;
+  SCAN.workerPromise = (async function(){
+    scanSetStatus('OCR 엔진 불러오는 중…', { spin: true });
+    await scanLoadScript(SCAN_CDN);
+    if(!window.Tesseract) throw new Error('tesseract-missing');
+    scanSetStatus('인식 준비 중… (처음 한 번만, 몇 초 걸려요)', { spin: true });
+    var worker = await window.Tesseract.createWorker('eng', 1, {
+      logger: function(m){
+        if(m && m.status === 'recognizing text'){
+          scanSetStatus('글자 인식 중… ' + Math.round((m.progress || 0) * 100) + '%', { spin: true });
+        }
+      }
+    });
+    await worker.setParameters({
+      tessedit_char_whitelist: SCAN_WHITELIST,
+      tessedit_pageseg_mode: '6',
+      preserve_interword_spaces: '1'
+    });
+    SCAN.worker = worker;
+    SCAN.workerReady = true;
+    return worker;
+  })();
+  try{
+    return await SCAN.workerPromise;
+  }catch(err){
+    SCAN.workerPromise = null;
+    throw err;
+  }
+}
+
+/* ---------- 프레임 캡처: 가이드 박스 영역만 잘라 확대 ---------- */
+function scanGrabFrame(){
+  var ui = scanUI();
+  var v = ui.video, stage = ui.stage, guide = ui.guide;
+  if(!v || !v.videoWidth || !v.clientWidth) return null;
+  var w = v.clientWidth, h = v.clientHeight;
+  var nw = v.videoWidth, nh = v.videoHeight;
+  var scale = Math.max(w / nw, h / nh);
+  var offX = (w - nw * scale) / 2, offY = (h - nh * scale) / 2;
+  var g = guide.getBoundingClientRect(), st = stage.getBoundingClientRect();
+  var gx = g.left - st.left, gy = g.top - st.top;
+  var pad = 0.04;
+  var sx = (gx - offX) / scale - (g.width / scale) * pad;
+  var sy = (gy - offY) / scale - (g.height / scale) * pad;
+  var sw = (g.width / scale) * (1 + pad * 2);
+  var sh = (g.height / scale) * (1 + pad * 2);
+  sx = Math.max(0, Math.min(nw - 8, sx));
+  sy = Math.max(0, Math.min(nh - 8, sy));
+  sw = Math.max(16, Math.min(nw - sx, sw));
+  sh = Math.max(16, Math.min(nh - sy, sh));
+
+  var ratio = Math.min(3, Math.max(1.2, 1400 / sw));
+  var cvs = document.createElement('canvas');
+  cvs.width = Math.round(sw * ratio);
+  cvs.height = Math.round(sh * ratio);
+  var ctx = cvs.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(v, sx, sy, sw, sh, 0, 0, cvs.width, cvs.height);
+  return scanPrepCanvas(cvs);
+}
+
+/* ---------- OCR ---------- */
+async function scanRecognize(worker, cvs){
+  var r1 = await worker.recognize(cvs);
+  var text = (r1 && r1.data && r1.data.text) || '';
+  var cards = scanMatchCards(text);
+  if(!cards.length){
+    scanSetStatus('한 번 더 읽는 중…', { spin: true });
+    var r2 = await worker.recognize(scanInvertCanvas(cvs));
+    var t2 = (r2 && r2.data && r2.data.text) || '';
+    text = text + '\n' + t2;
+    cards = scanMatchCards(text);
+  }
+  return { text: String(text).replace(/\s+/g, ' ').trim(), cards: cards };
+}
+
+/* ---------- 자동 연속 스캔 ---------- */
+function scanStartAuto(){
+  scanStopAuto();
+  if(!SCAN.auto || !SCAN.isOpen) return;
+  SCAN.autoTimer = setInterval(function(){
+    if(document.hidden || SCAN.busy || !SCAN.isOpen) return;
+    if(!SCAN.els.dialog.hidden) return;
+    scanCapture(false);
+  }, 2600);
+  scanSyncAutoBtn();
+}
+
+function scanStopAuto(remember){
+  if(SCAN.autoTimer){ clearInterval(SCAN.autoTimer); SCAN.autoTimer = null; }
+  if(remember) SCAN.resumeAuto = SCAN.auto;
+}
+
+function scanSyncAutoBtn(){
+  var ui = scanUI();
+  ui.autoBtn.setAttribute('aria-pressed', SCAN.auto ? 'true' : 'false');
+  ui.autoBtn.textContent = SCAN.auto ? '자동' : '자동 꺼짐';
+}
+
+function scanToggleAuto(){
+  SCAN.auto = !SCAN.auto;
+  scanSyncAutoBtn();
+  if(SCAN.auto){
+    scanStartAuto();
+    scanSetStatus('자동 인식 켜짐 · 번호를 박스 안에 맞춰 주세요');
+  } else {
+    scanStopAuto();
+    scanSetStatus('자동 인식 꺼짐 · 📸 지금 인식으로 찍어 주세요');
+  }
+}
+
+/* ---------- 촬영 → 인식 ---------- */
+async function scanCapture(manual){
+  var ui = scanUI();
+  if(!SCAN.isOpen || SCAN.busy) return;
+  if(!ui.dialog.hidden) return;
+  if(!SCAN.stream || !ui.video.videoWidth){
+    if(manual) scanSetStatus('카메라 화면이 아직 준비되지 않았어요', { err: true });
+    return;
+  }
+  SCAN.busy = true;
+  ui.shutter.disabled = true;
+  var failed = false, msg = '번호를 읽지 못했어요';
+  try{
+    var worker = await scanEnsureWorker();
+    var cvs = scanGrabFrame();
+    if(!cvs) throw new Error('frame-empty');
+    scanSetStatus('글자 인식 중…', { spin: true });
+    var out = await scanRecognize(worker, cvs);
+    SCAN.lastText = out.text;
+    if(out.cards.length){
+      SCAN.candidates = out.cards;
+      SCAN.currentCard = out.cards[0];
+      scanStopAuto(true);
+      scanShowResult();
+    } else if(manual || !SCAN.auto){
+      scanShowFail(out.text);
+    } else {
+      scanSetStatus('아직 번호를 못 읽었어요 · 조금 더 가까이, 다르게 비춰 보세요');
+    }
+  }catch(err){
+    failed = true;
+    var m = String((err && err.message) || '');
+    if(m === 'tesseract-missing' || m.indexOf('script-load') > -1){
+      msg = 'OCR 엔진을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.';
+    }
+    if(manual || !SCAN.auto) scanShowError('인식하지 못했어요', msg);
+    else scanSetStatus(msg, { err: true });
+  }finally{
+    SCAN.busy = false;
+    ui.shutter.disabled = false;
+  }
+  return !failed;
+}
+
+/* ---------- 결과 확인 ---------- */
+function scanStockText(c){
+  var r = rec(c.id);
+  return '현재 보유 · 일반 ' + r.q + ' · Foil ' + r.f;
+}
+
+function scanShowResult(){
+  var ui = scanUI();
+  var c = SCAN.currentCard;
+  if(!c) return;
+  var foilOnly = isFoilOnly(c);
+  var doms = String(c.dom || '').split(' / ').join(' · ');
+  var h = '<div class="sc-rar-row">'
+    + '<span class="sc-no">' + esc(c.num) + '</span>'
+    + '<span class="sc-rar rar-' + esc(c.rar.toLowerCase()) + '">' + esc(c.rar) + '</span>'
+    + '</div>'
+    + '<div class="sc-ko">' + esc(c.ko) + '</div>'
+    + '<div class="sc-en">' + esc(c.en) + '</div>'
+    + '<div class="sc-meta">' + esc(RAR_KO[c.rar] || c.rar) + ' · ' + esc(c.kind) + ' · ' + esc(doms)
+      + (c.variant ? ' · ' + esc(c.variant) : '') + '<br>' + esc(scanStockText(c)) + '</div>';
+  if(SCAN.lastText) h += '<div class="sc-raw">인식: ' + esc(SCAN.lastText.slice(0, 120)) + '</div>';
+  h += '<div class="sc-btns">';
+  if(!foilOnly) h += '<button class="btn" data-scan="add" data-kind="n">일반 +1</button>';
+  h += '<button class="btn primary" data-scan="add" data-kind="f">Foil +1</button></div>';
+  h += '<button class="btn ghost sc-again" data-scan="again">다시 스캔</button>';
+  if(SCAN.candidates.length > 1){
+    h += '<div class="sc-alts">다른 후보';
+    SCAN.candidates.slice(1, 4).forEach(function(o){
+      h += '<button data-scan="pick" data-id="' + esc(o.id) + '">' + esc(o.num) + ' ' + esc(o.ko) + '</button>';
+    });
+    h += '</div>';
+  }
+  ui.dialog.innerHTML = '<div class="scan-card">' + h + '</div>';
+  ui.dialog.hidden = false;
+  scanSetStatus(null);
+}
+
+function scanShowFail(text){
+  var ui = scanUI();
+  scanStopAuto(true);
+  ui.dialog.innerHTML = '<div class="scan-card">'
+    + '<div class="sc-title">번호를 읽지 못했어요</div>'
+    + '<p class="sc-msg">빛 반사가 있으면 카드를 살짝 기울이거나 각도를 바꿔 보세요.\n번호가 박스 가운데에 크게 오도록 맞추면 잘 읽힙니다.</p>'
+    + (text ? '<div class="sc-raw">인식된 글자: ' + esc(String(text).replace(/\s+/g, ' ').slice(0, 120)) + '</div>' : '')
+    + '<div class="sc-btns">'
+      + '<button class="btn primary" data-scan="again">다시 스캔</button>'
+      + '<button class="btn ghost" data-scan="search">직접 번호 검색</button>'
+    + '</div>'
+  + '</div>';
+  ui.dialog.hidden = false;
+  scanSetStatus(null);
+}
+
+function scanDismiss(){
+  var ui = scanUI();
+  ui.dialog.hidden = true;
+  ui.dialog.innerHTML = '';
+  SCAN.candidates = [];
+  SCAN.currentCard = null;
+  SCAN.lastText = '';
+  var resume = SCAN.resumeAuto;
+  SCAN.resumeAuto = false;
+  if(resume && SCAN.auto) scanStartAuto();
+}
+
+function scanAgain(){
+  scanDismiss();
+  scanSetStatus(SCAN.auto ? '번호를 박스 안에 맞춰 주세요 · 자동 인식 중' : '번호를 박스 안에 맞추고 📸 지금 인식을 눌러 주세요');
+  if(SCAN.auto) scanStartAuto();
+}
+
+/* 수량 +1 (Rare 이상은 Foil 칸만 있으므로 항상 Foil) */
+function scanAdd(card, kind){
+  if(!card) return;
+  var r = state.cards[card.id];
+  if(!r) r = state.cards[card.id] = { q: 0, f: 0, p: '', s: '미등록', m: '' };
+  var field = isFoilOnly(card) ? 'f' : (kind === 'f' ? 'f' : 'q');
+  r[field] = Math.min(9999, (r[field] || 0) + 1);
+  scheduleSave();
+  render();
+  var label = field === 'f' ? 'Foil' : '일반';
+  toast(card.num + ' ' + card.ko + ' · ' + label + ' +1 (보유 ' + (r.q + r.f) + '장)');
+  scanSetStatus(card.num + ' ' + card.ko + ' · ' + label + ' +1 · 다음 카드를 비춰 주세요');
+  scanDismiss();
+}
+
+function scanGoSearch(){
+  var ui = scanUI();
+  var num = SCAN.candidates.length ? SCAN.candidates[0].num : '';
+  if(!num){
+    var m = /\d{2,3}[a-zA-Z]?/.exec(SCAN.lastText || '');
+    num = m ? m[0] : '';
+  }
+  scanClose();
+  var s = document.getElementById('search');
+  if(num){ s.value = num; state.query = num; }
+  render();
+  s.focus();
+  try{ s.select(); }catch(e){}
+  toast(num ? '검색창에 ‘' + num + '’를 넣었어요' : '번호를 직접 입력해 주세요');
+  return ui;
+}
+
+/* ---------- 바인딩 ---------- */
+function bindScan(){
+  var ui = scanUI();
+  document.getElementById('btnScan').addEventListener('click', scanOpen);
+  document.getElementById('scanClose').addEventListener('click', scanClose);
+  ui.shutter.addEventListener('click', function(){ scanCapture(true); });
+  ui.autoBtn.addEventListener('click', scanToggleAuto);
+  ui.torchBtn.addEventListener('click', scanToggleTorch);
+  ui.dialog.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-scan]') : null;
+    if(!b) return;
+    var act = b.dataset.scan;
+    if(act === 'add') scanAdd(SCAN.currentCard, b.dataset.kind);
+    else if(act === 'again') scanAgain();
+    else if(act === 'search') scanGoSearch();
+    else if(act === 'close') scanClose();
+    else if(act === 'retry'){
+      ui.dialog.hidden = true;
+      ui.dialog.innerHTML = '';
+      scanSetStatus('카메라 준비 중…', { spin: true });
+      scanStartCamera();
+      scanEnsureWorker().catch(function(){});
+    } else if(act === 'pick'){
+      var c = BY_ID[b.dataset.id];
+      if(c){ SCAN.currentCard = c; scanShowResult(); }
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && SCAN.isOpen){ e.preventDefault(); scanClose(); }
+  });
+  window.addEventListener('pagehide', function(){
+    if(SCAN.stream){
+      try{ SCAN.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+    }
+  });
+}
+
 /* ---------------- 이벤트 연결 ---------------- */
 function bind(){
   var search = document.getElementById('search');
@@ -1702,6 +2513,7 @@ function bind(){
   });
 
   document.addEventListener('keydown', function(e){
+    if(SCAN && SCAN.isOpen) return;
     if(e.key === '/' && document.activeElement !== search){
       e.preventDefault(); search.focus(); search.select();
     }
@@ -1721,6 +2533,8 @@ function bind(){
   window.addEventListener('beforeunload', function(){
     if(saveTimer){ clearTimeout(saveTimer); prune(); persist(); }
   });
+
+  bindScan();
 }
 
 /* ---------------- 시작 ---------------- */
