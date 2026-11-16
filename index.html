@@ -278,6 +278,8 @@
 
   .c-foot{display:contents}
   .c-stock{display:flex;flex-direction:column;gap:6px}
+  /* Rare 이상(Rare·Epic·Showcase·Overnumber)은 Foil 단일 수량만 */
+  .row.is-foil-only .c-stock{grid-template-columns:minmax(0,1fr)}
   .stepper{display:flex;align-items:center;gap:6px}
   .stepper .lbl{font-size:10.5px;color:var(--dim);width:26px;flex:none;font-weight:700;letter-spacing:.2px}
   .step{
@@ -422,6 +424,7 @@
       display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;
       padding-top:2px;
     }
+    .row.is-foil-only .c-stock{grid-column:1/-1;grid-template-columns:minmax(0,1fr)}
     .stepper{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;gap:6px;align-items:center}
     .stepper .lbl{grid-column:1/-1;width:auto;font-size:11px;margin-bottom:-2px}
     .step{width:46px;height:46px;border-radius:12px;font-size:21px}
@@ -470,6 +473,8 @@
     .sortwrap label{font-size:11px}
     select.sel{height:34px}
     .c-stock{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
+    .row.is-foil-only .c-stock{grid-template-columns:minmax(0,1fr)}
+    .row.is-foil-only .stepper{max-width:168px}
     .stepper{display:grid;grid-template-columns:32px minmax(0,1fr) 32px;gap:4px}
     .stepper .lbl{grid-column:1/-1;width:auto;font-size:10px;margin-bottom:-3px}
     .step{width:32px;height:32px;border-radius:8px;font-size:16px}
@@ -601,6 +606,7 @@
   <footer class="foot">
     <b>저장</b> — 입력한 내용은 이 브라우저(localStorage)에 자동 저장됩니다. 기기를 바꾸거나 브라우저 데이터를 지우면 사라지니 <b>JSON 백업</b>을 가끔 받아 두세요.
     <br><b>금액</b> — (일반 보유 + Foil 보유) × 단가로 계산하고, 순수익은 이베이 수수료 약 14%를 뺀 값입니다. 실제 정산은 카테고리·셀러 등급에 따라 조금 다릅니다.
+    <br><b>수량 칸</b> — Rare·Epic·Showcase·Overnumber는 부스터 팩에서 Foil로만 나오므로 <b>Foil 수량 칸 하나만</b> 표시합니다. 예전에 일반 수량으로 넣어 둔 값은 페이지를 열 때 Foil 수량으로 합산됩니다.
     <br><b>카드 데이터</b> — Riftbound: Origins(OGN) 298장 + 대체 아트 30장 + 오버넘버 12장. 카드명·번호는 <a href="https://decks.kr/cards/set/ogn" target="_blank" rel="noopener">decks.kr</a> 한글판 표기, 희귀도는 <a href="https://riftwatch.gg/sets/ogn/" target="_blank" rel="noopener">Riftwatch</a>·CardOwners 대조. 2026-11-17 기준.
     <br><b>밴</b> — 미끼 갈고리(242)·눈부신 오로라(160)는 글로벌 스탠다드 밴 카드라 목록에서 표시만 하고, 필요하면 ‘밴 카드 제외’로 숨깁니다.
   </footer>
@@ -619,6 +625,9 @@ const DOM_EN  = {'분노':'Fury','평온':'Calm','정신':'Mind','육체':'Body'
 const RAR_KO  = {'Common':'일반','Uncommon':'특별','Rare':'희귀','Epic':'서사','Showcase':'쇼케이스','Overnumber':'오버넘버'};
 const STATUSES = ['미등록','등록됨','품절'];
 const FEE_RATE = 0.14;
+/* Rare 이상은 부스터 팩에서 Foil로만 나오므로 Foil 단일 수량(foilQty)으로 관리한다 */
+const FOIL_ONLY_RAR = {Rare:1, Epic:1, Showcase:1, Overnumber:1};
+function isFoilOnly(c){ return !!(c && FOIL_ONLY_RAR[c.rar]); }
 
 /* ---- 카드 데이터: [번호, 한글명, 영문명, 희귀도, 유형, 영역, 인쇄, 밴] ---- */
 const CARDS_RAW = [
@@ -1130,8 +1139,13 @@ function rowHTML(c){
   var doms = c.dom.split(' / ');
   var value = valueOf(c);
   var out = (r.q + r.f) === 0;
+  var foilOnly = isFoilOnly(c);
+  var stockHTML = foilOnly
+    ? '<div class="c-stock single" title="Rare 이상은 부스터에서 Foil로만 나옵니다">'
+        + stepperHTML('f','수량 (Foil)',r.f) + '</div>'
+    : '<div class="c-stock">'+stepperHTML('q','일반',r.q)+stepperHTML('f','Foil',r.f)+'</div>';
 
-  return '<article class="row'+(c.banned?' is-banned':'')+'" data-id="'+esc(c.id)+'" data-rar="'+esc(c.rar)+'">'
+  return '<article class="row'+(c.banned?' is-banned':'')+(foilOnly?' is-foil-only':'')+'" data-id="'+esc(c.id)+'" data-rar="'+esc(c.rar)+'">'
     + '<div class="c-no"><span class="no">'+esc(c.num)+'</span><span class="den">/298</span></div>'
     + '<div class="c-name">'
       + '<div class="ko">'+esc(c.ko)+'</div>'
@@ -1144,7 +1158,7 @@ function rowHTML(c){
         + (c.banned ? '<span class="pill banned" title="글로벌 스탠다드 밴 카드">BANNED</span>' : '')
       + '</div>'
     + '</div>'
-    + '<div class="c-stock">'+stepperHTML('q','일반',r.q)+stepperHTML('f','Foil',r.f)+'</div>'
+    + stockHTML
     + '<div class="c-foot">'
     + '<div class="c-price"><span class="cur">$</span><input class="price" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" value="'+esc(r.p)+'" aria-label="'+esc(c.ko)+' 이베이 판매 단가(USD)"></div>'
     + '<div class="c-status"><select class="status" data-v="'+esc(r.s)+'" aria-label="'+esc(c.ko)+' 등록 상태">'
@@ -1212,6 +1226,7 @@ function updateSummary(visibleCount){
 
 /* ---------------- 저장 ---------------- */
 var saveTimer = null;
+var migratedFoil = 0;   /* 이번 로드에서 Rare 이상 일반 수량 → Foil로 옮긴 카드 수 */
 function setSaveState(mode){
   var box = document.getElementById('saveState');
   var txt = document.getElementById('saveText');
@@ -1262,6 +1277,24 @@ function scheduleSave(){
   saveTimer = setTimeout(function(){ prune(); persist(); setSaveState(storageOK ? 'saved' : 'error'); }, 300);
 }
 
+/* 예전 기록에서 Rare 이상 카드의 일반 수량(q)에 넣어 둔 값을 Foil(f)로 합산 이관 */
+function migrateFoilQty(cards){
+  var n = 0;
+  Object.keys(cards).forEach(function(id){
+    var c = BY_ID[id];
+    if(!c || !isFoilOnly(c)) return;
+    var v = cards[id];
+    if(!v) return;
+    var q = clampQty(v.q);
+    if(q > 0){
+      v.f = clampQty(v.f) + q;
+      v.q = 0;
+      n++;
+    }
+  });
+  return n;
+}
+
 function load(){
   var raw = null;
   try{ raw = localStorage.getItem(LS_KEY); }catch(e){}
@@ -1280,6 +1313,7 @@ function load(){
             m: String(v.m||'').slice(0,300)
           };
         });
+        migratedFoil = migrateFoilQty(state.cards);
       }
       if(d && d.opts){
         state.opts.extraShip = String(d.opts.extraShip||'');
@@ -1572,6 +1606,7 @@ function doImportText(text){
       m: String(v.m||'').slice(0,300)
     };
   });
+  var movedFoil = migrateFoilQty(state.cards);
   if(data.opts){
     state.opts.extraShip = String(data.opts.extraShip||'');
     state.opts.discount = String(data.opts.discount||'');
@@ -1580,7 +1615,7 @@ function doImportText(text){
   }
   persist();
   render();
-  toast(n+'종 기록을 불러왔어요');
+  toast(n+'종 기록을 불러왔어요' + (movedFoil ? ' (Rare 이상 일반 수량 '+movedFoil+'종 → Foil)' : ''));
 }
 
 /* ---------------- 이벤트 연결 ---------------- */
@@ -1701,6 +1736,10 @@ function bind(){
   load();
   bind();
   render();
+  if(migratedFoil > 0){
+    persist();
+    toast('Rare 이상 '+migratedFoil+'종의 일반 수량을 Foil 수량으로 옮겼어요');
+  }
   setSaveState(storageOK ? 'saved' : 'error');
 })();
 </script>
