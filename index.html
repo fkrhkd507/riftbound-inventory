@@ -1760,6 +1760,12 @@ function syncHeaders(){
   };
 }
 
+function syncPatchHeaders(){
+  var h = syncHeaders();
+  h['Prefer'] = 'return=representation';
+  return h;
+}
+
 /* 서버 행 읽기 → 없으면 null */
 function syncFetchRow(){
   return fetch(SYNC_ROW_URL + '&select=data,updated_at', {
@@ -1794,7 +1800,7 @@ function syncPush(opts){
   if(SYNC.mode !== 'synced') syncBadge('saving');
   var job = fetch(SYNC_ROW_URL, {
     method:'PATCH',
-    headers: syncHeaders(),
+    headers: syncPatchHeaders(),
     body: JSON.stringify({ data: snap, updated_at: snap.savedAt }),
     keepalive: !!opts.keepalive
   }).then(function(res){
@@ -1802,7 +1808,11 @@ function syncPush(opts){
       if(!res.ok) throw new Error('HTTP ' + res.status);
       var rows = null;
       try{ rows = JSON.parse(txt); }catch(e){}
-      if(!(rows instanceof Array) || !rows.length) throw new Error('키가 맞지 않아요');
+      if(rows instanceof Array){
+        if(!rows.length) throw new Error('키가 맞지 않아요');
+      } else if(res.status !== 204){
+        throw new Error('응답을 읽을 수 없어요');
+      }
       syncStampLocal(snap);
       SYNC.lastOk = new Date();
       SYNC.lastError = '';
