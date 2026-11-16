@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c13">
+<title>리프트바운드 재고 관리 · Riftbound Origins</title>
+<style>
+  :root{
+    --bg:#090b12;
+    --bg-soft:#0d1019;
+    --panel:#121624;
+    --panel-2:#161b2c;
+    --line:#232a40;
+    --line-soft:#1b2135;
+    --txt:#e9edf8;
+    --txt-2:#b9c2d8;
+    --mut:#8b94ae;
+    --dim:#657089;
+    --gold:#e2c07d;
+    --gold-2:#a9812f;
+    --ok:#3ec98a;
+    --warn:#f0b23a;
+    --bad:#ef5f6b;
+    --blue:#66a6ff;
+
+    --rar-common:#9aa4bd;
+    --rar-uncommon:#5ac7a4;
+    --rar-rare:#5aa9f7;
+    --rar-epic:#b98cff;
+    --rar-showcase:#e2c07d;
+    --rar-overnumber:#ff8a5c;
+
+    --dom-fury:#ff6b5e;
+    --dom-calm:#57c9a6;
+    --dom-mind:#7b8cff;
+    --dom-body:#f0a45a;
+    --dom-chaos:#b06be8;
+    --dom-order:#e2c07d;
+    --dom-none:#9aa4bd;
+
+    --radius:14px;
+    --row-h:96px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(1100px 520px at 12% -8%, rgba(226,192,125,.10), transparent 60%),
+      radial-gradient(900px 480px at 96% 0%, rgba(102,166,255,.09), transparent 55%),
+      var(--bg);
+    color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+    font-size:14px;
+    line-height:1.45;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  ::selection{background:rgba(226,192,125,.28)}
+  input,button,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;background:none;border:0}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .num,.mono,.c-no,.c-total,.stat strong{font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:14px 12px 28px}
+
+  /* ---------- 헤더 ---------- */
+  .hero{
+    position:relative;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:linear-gradient(160deg, rgba(226,192,125,.10), rgba(18,22,36,.92) 38%, rgba(18,22,36,.92));
+    padding:16px 16px 14px;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"🂡";
+    position:absolute;right:-14px;top:-34px;
+    font-size:150px;line-height:1;
+    color:rgba(226,192,125,.06);
+    pointer-events:none;user-select:none;
+  }
+  .hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .logo{
+    width:42px;height:42px;flex:none;border-radius:12px;
+    display:grid;place-items:center;font-size:20px;
+    background:linear-gradient(150deg,rgba(226,192,125,.22),rgba(226,192,125,.05));
+    border:1px solid rgba(226,192,125,.35);
+    box-shadow:0 6px 18px rgba(0,0,0,.35) inset;
+  }
+  h1{margin:0;font-size:19px;letter-spacing:-.3px;font-weight:800}
+  .brand p{margin:2px 0 0;font-size:12px;color:var(--mut);letter-spacing:.2px}
+  .save-indicator{
+    font-size:11px;color:var(--dim);white-space:nowrap;
+    border:1px solid var(--line);border-radius:999px;padding:6px 11px;
+    background:rgba(255,255,255,.02);
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .save-indicator.saving .dot{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+  .save-indicator.save-error{border-color:rgba(239,95,107,.45);color:#ff9aa3}
+  .save-indicator.save-error .dot{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+
+  .stats{
+    display:grid;gap:8px;margin-top:14px;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+  }
+  .stat{
+    border:1px solid var(--line-soft);
+    background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));
+    border-radius:13px;padding:10px 12px;min-width:0;
+  }
+  .stat .k{display:block;font-size:11px;color:var(--mut);letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat strong{display:block;font-size:20px;font-weight:800;letter-spacing:-.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat .u{font-size:11px;color:var(--dim);margin-left:3px;font-weight:600}
+  .stat .sub{display:block;font-size:10.5px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stat.accent strong{color:var(--gold)}
+  .stat.net strong{color:var(--ok)}
+
+  /* ---------- 툴바 ---------- */
+  .searchbar{
+    position:sticky;top:0;z-index:30;
+    margin:12px -12px 0;padding:10px 12px;
+    background:rgba(9,11,18,.88);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .searchbox{position:relative;display:flex;align-items:center}
+  .searchbox .icon{
+    position:absolute;left:13px;top:50%;transform:translateY(-50%);
+    color:var(--dim);pointer-events:none;font-size:15px;
+  }
+  #search{
+    width:100%;height:48px;border-radius:13px;
+    padding:0 44px 0 38px;
+    background:var(--panel);border:1px solid var(--line);
+    color:var(--txt);font-size:15px;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  #search::placeholder{color:#5e677d;font-size:13.5px}
+  #search::-webkit-search-cancel-button,#search::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
+  #search:focus{outline:none;border-color:rgba(226,192,125,.55);box-shadow:0 0 0 3px rgba(226,192,125,.12)}
+  .clear-btn{
+    position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    width:38px;height:38px;border-radius:10px;color:var(--mut);
+    display:none;place-items:center;font-size:16px;
+  }
+  .clear-btn:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+  .clear-btn.show{display:grid}
+
+  .toolbar{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chips.toggles{flex-basis:100%}
+  .chip{
+    border:1px solid var(--line);background:var(--panel);
+    color:var(--txt-2);border-radius:999px;
+    padding:8px 12px;font-size:12.5px;font-weight:600;
+    min-height:36px;display:inline-flex;align-items:center;gap:6px;
+    transition:background .15s,border-color .15s,color .15s;
+  }
+  .chip b{font-weight:700;color:var(--dim);font-size:11px}
+  .chip:hover{border-color:var(--line-soft);background:var(--panel-2)}
+  .chip[aria-pressed="true"]{background:rgba(226,192,125,.14);border-color:rgba(226,192,125,.5);color:var(--gold)}
+  .chip[aria-pressed="true"] b{color:rgba(226,192,125,.8)}
+  .chip.toggle[aria-pressed="true"]{background:rgba(102,166,255,.14);border-color:rgba(102,166,255,.45);color:#a9cbff}
+  .chip.toggle.banned[aria-pressed="true"]{background:rgba(239,95,107,.13);border-color:rgba(239,95,107,.45);color:#ff9aa3}
+
+  .spacer{flex:1 1 auto}
+  .sortwrap{display:flex;align-items:center;gap:6px}
+  .sortwrap label{font-size:11.5px;color:var(--dim)}
+  select.sel{
+    height:36px;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel);color:var(--txt-2);font-size:12.5px;padding:0 8px;
+  }
+
+  .opts{border:1px solid var(--line);border-radius:12px;background:var(--panel);font-size:12.5px;flex-basis:100%}
+  .opts summary{cursor:pointer;padding:9px 12px;color:var(--mut);list-style:none;display:flex;align-items:center;gap:6px;min-height:44px}
+  .opts summary::-webkit-details-marker{display:none}
+  .opts summary::before{content:"▸";color:var(--dim);transition:transform .15s}
+  .opts[open] summary::before{transform:rotate(90deg)}
+  .opts-body{display:flex;flex-wrap:wrap;gap:10px 16px;padding:0 12px 12px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field span{font-size:11px;color:var(--dim)}
+  .field input{
+    height:40px;border-radius:10px;border:1px solid var(--line);
+    background:var(--bg-soft);padding:0 10px;width:150px;font-size:13px;
+  }
+  .opts-note{color:var(--dim);font-size:11.5px;align-self:center;max-width:420px}
+
+  /* ---------- 액션 ---------- */
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .btn{
+    min-height:42px;border-radius:11px;border:1px solid var(--line);
+    background:var(--panel);color:var(--txt-2);
+    padding:0 14px;font-size:13px;font-weight:650;
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    transition:background .15s,border-color .15s,transform .06s;
+  }
+  .btn:hover{background:var(--panel-2);border-color:var(--line-soft);color:var(--txt)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{
+    background:linear-gradient(150deg,#e8ca8b,#c49a4b 70%);
+    color:#20180a;border-color:rgba(226,192,125,.6);
+    box-shadow:0 6px 18px rgba(196,154,75,.18);
+  }
+  .btn.primary:hover{filter:brightness(1.04)}
+  .btn.ghost{background:transparent}
+
+  /* ---------- 목록 ---------- */
+  .listmeta{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:14px 2px -4px;font-size:11.5px;color:var(--dim);
+  }
+  .listmeta b{color:var(--txt-2);font-weight:700}
+
+  .listwrap{
+    margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);
+    background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,0));
+  }
+  .row:last-child{border-radius:0 0 var(--radius) var(--radius)}
+  .thead{
+    display:none;
+    grid-template-columns:56px minmax(0,1fr) 236px 96px 104px minmax(0,150px) 84px;
+    gap:10px;align-items:center;
+    padding:10px 14px;
+    font-size:11.5px;color:var(--dim);letter-spacing:.3px;
+    background:var(--bg-soft);border-bottom:1px solid var(--line);
+    position:sticky;top:69px;z-index:12;
+    border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .thead .ta-r{text-align:right}
+
+  .row{
+    display:grid;
+    grid-template-columns:56px minmax(0,1fr) 236px 96px 104px minmax(0,150px) 84px;
+    gap:10px;align-items:center;
+    padding:10px 14px;
+    border-bottom:1px solid var(--line-soft);
+    transition:background .12s;
+  }
+  .row:last-child{border-bottom:0}
+  .row:hover{background:rgba(255,255,255,.022)}
+  .row.is-banned{box-shadow:inset 3px 0 0 rgba(239,95,107,.55)}
+  .row.is-out{opacity:.72}
+
+  .c-no{display:flex;align-items:baseline;font-weight:800;font-size:15px;letter-spacing:-.3px;white-space:nowrap}
+  .c-no .den{font-size:9.5px;color:var(--dim);font-weight:600;margin-left:1px}
+
+  .c-name{min-width:0}
+  .c-name .ko{font-size:14px;font-weight:700;letter-spacing:-.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-name .en{font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+  .badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+  .pill{
+    font-size:10px;font-weight:700;letter-spacing:.2px;
+    padding:2px 7px;border-radius:999px;
+    border:1px solid var(--line);color:var(--txt-2);
+    background:rgba(255,255,255,.03);white-space:nowrap;
+  }
+  .pill.rar-common{color:var(--rar-common);border-color:rgba(154,164,189,.35)}
+  .pill.rar-uncommon{color:var(--rar-uncommon);border-color:rgba(90,199,164,.38)}
+  .pill.rar-rare{color:var(--rar-rare);border-color:rgba(90,169,247,.38)}
+  .pill.rar-epic{color:var(--rar-epic);border-color:rgba(185,140,255,.42);background:rgba(185,140,255,.10)}
+  .pill.rar-showcase{color:var(--rar-showcase);border-color:rgba(226,192,125,.45);background:rgba(226,192,125,.08)}
+  .pill.rar-overnumber{color:var(--rar-overnumber);border-color:rgba(255,138,92,.45);background:rgba(255,138,92,.08)}
+  .pill.dom-fury{color:var(--dom-fury);border-color:rgba(255,107,94,.30)}
+  .pill.dom-calm{color:var(--dom-calm);border-color:rgba(87,201,166,.30)}
+  .pill.dom-mind{color:var(--dom-mind);border-color:rgba(123,140,255,.30)}
+  .pill.dom-body{color:var(--dom-body);border-color:rgba(240,164,90,.30)}
+  .pill.dom-chaos{color:var(--dom-chaos);border-color:rgba(176,107,232,.30)}
+  .pill.dom-order{color:var(--dom-order);border-color:rgba(226,192,125,.30)}
+  .pill.dom-none{color:var(--dom-none);border-color:rgba(154,164,189,.30)}
+  .pill.variant{color:#8fb0d8;border-color:rgba(143,176,216,.28)}
+  .pill.banned{color:#ff9aa3;border-color:rgba(239,95,107,.55);background:rgba(239,95,107,.14);letter-spacing:.6px}
+
+  .c-foot{display:contents}
+  .c-stock{display:flex;flex-direction:column;gap:6px}
+  .stepper{display:flex;align-items:center;gap:6px}
+  .stepper .lbl{font-size:10.5px;color:var(--dim);width:26px;flex:none;font-weight:700;letter-spacing:.2px}
+  .step{
+    width:36px;height:36px;flex:none;
+    border-radius:10px;border:1px solid var(--line);
+    background:var(--panel-2);color:var(--txt);
+    font-size:18px;font-weight:700;line-height:1;
+    display:grid;place-items:center;
+    transition:background .12s,border-color .12s,color .12s;
+    -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+    touch-action:manipulation;
+  }
+  .step:hover{background:#1e2438;border-color:#313a58}
+  .step:active{background:rgba(226,192,125,.18);border-color:rgba(226,192,125,.5);color:var(--gold)}
+  .step.plus{color:#cfe6ff}
+  .stepper .num{
+    width:46px;height:36px;flex:none;
+    border-radius:9px;border:1px solid var(--line-soft);
+    background:var(--bg-soft);color:var(--txt);
+    text-align:center;font-size:14px;font-weight:700;
+    padding:0;
+  }
+  .stepper .num::-webkit-outer-spin-button,.stepper .num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .stepper.is-zero .num{color:var(--dim);font-weight:600}
+  .stepper.foil .lbl{color:#d9b46a}
+
+  .c-price{position:relative;display:flex;align-items:center}
+  .c-price .cur{position:absolute;left:9px;font-size:12px;color:var(--dim);pointer-events:none}
+  .price{
+    width:100%;height:36px;border-radius:9px;
+    border:1px solid var(--line-soft);background:var(--bg-soft);
+    padding:0 8px 0 20px;font-size:13.5px;font-weight:650;text-align:right;
+  }
+  .price::placeholder{color:#4f586d;font-weight:500;text-align:right}
+  .price:focus,.stepper .num:focus,.memo:focus,.status:focus{outline:none;border-color:rgba(226,192,125,.45);background:#0c0f18}
+
+  .status{
+    width:100%;height:36px;border-radius:9px;
+    border:1px solid var(--line-soft);background:var(--bg-soft);
+    font-size:12.5px;font-weight:650;padding:0 6px;
+  }
+  .status[data-v="등록됨"]{color:var(--ok);border-color:rgba(62,201,138,.35);background:rgba(62,201,138,.08)}
+  .status[data-v="품절"]{color:var(--warn);border-color:rgba(240,178,58,.32);background:rgba(240,178,58,.07)}
+  .status[data-v="미등록"]{color:var(--mut)}
+
+  .c-memo{min-width:0}
+  .memo{
+    width:100%;height:36px;border-radius:9px;
+    border:1px solid transparent;background:transparent;
+    padding:0 8px;font-size:12.5px;color:var(--txt-2);
+  }
+  .memo::placeholder{color:#4c5468}
+  .memo:hover{background:rgba(255,255,255,.03)}
+
+  .c-total{text-align:right;font-size:13px;font-weight:700;color:var(--txt-2);white-space:nowrap}
+  .c-total.zero{color:#4c5468;font-weight:600}
+  .c-total.has{color:var(--gold)}
+
+  .empty{
+    padding:60px 20px;text-align:center;color:var(--dim);
+  }
+  .empty strong{display:block;color:var(--txt-2);font-size:15px;margin-bottom:6px}
+  .empty .hint{font-size:12.5px}
+
+  /* ---------- 토스트 ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);
+    background:#1b2132;border:1px solid #2f3a58;color:var(--txt);
+    padding:11px 16px;border-radius:12px;font-size:13px;font-weight:600;
+    box-shadow:0 12px 30px rgba(0,0,0,.5);
+    opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    z-index:100;max-width:calc(100% - 32px);text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  footer.foot{
+    margin-top:18px;padding:14px 4px 4px;color:var(--dim);font-size:11.5px;line-height:1.7;
+    border-top:1px solid var(--line-soft);
+  }
+  footer.foot b{color:var(--mut);font-weight:650}
+  footer.foot a{color:#8fb0d8;text-decoration:none}
+
+  /* ---------- 모바일 ---------- */
+  @media (max-width:1099px){
+    body{padding-bottom:96px}
+    .wrap{padding:12px 10px 18px}
+    .hero{border-radius:16px;padding:14px 13px 12px}
+    h1{font-size:17px}
+    .logo{width:38px;height:38px;border-radius:11px;font-size:18px}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:10px}
+    .stat{padding:8px 10px;border-radius:10px}
+    .stat .k{font-size:10.5px}
+    .stat strong{font-size:17px;margin-top:1px}
+    .stat .sub{display:none}
+    .searchbar{margin:10px -10px 0;padding:8px 10px}
+    #search{height:50px;font-size:16px}
+    .toolbar{gap:8px}
+    .chips{gap:6px;width:100%}
+    .chip{min-height:36px;padding:6px 11px;font-size:12.5px}
+    .spacer{display:none}
+    .sortwrap{width:100%;justify-content:space-between}
+    select.sel{height:40px;flex:1;max-width:220px}
+    .actions{
+      position:fixed;left:0;right:0;bottom:0;z-index:40;
+      margin:0;padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+      gap:6px;flex-wrap:nowrap;
+      background:rgba(11,14,22,.94);
+      backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+      border-top:1px solid var(--line);
+    }
+    .actions .btn{
+      flex:1 1 0;min-width:0;min-height:48px;padding:0 6px;
+      font-size:12px;border-radius:12px;flex-direction:column;gap:2px;line-height:1.15;
+    }
+    .actions .btn .ic{font-size:16px}
+
+    .thead{display:none}
+    .listwrap{border-radius:14px;margin-top:12px}
+    .row{
+      grid-template-columns:auto minmax(0,1fr);
+      grid-template-areas:
+        "no name"
+        "stock stock"
+        "foot foot";
+      gap:10px;
+      padding:13px 13px 14px;
+      align-items:start;
+    }
+    .c-no{padding-top:4px}
+    .c-foot{
+      grid-area:foot;display:grid;
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      grid-template-areas:"price status" "memo total";
+      gap:8px 10px;align-items:center;
+    }
+    .c-no{grid-area:no;font-size:16px;padding-top:2px}
+    .c-name{grid-area:name}
+    .c-name .ko{font-size:14.5px;white-space:normal;line-height:1.3}
+    .c-name .en{font-size:11.5px;white-space:normal;line-height:1.3}
+    .c-stock{
+      grid-area:stock;
+      display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;
+      padding-top:2px;
+    }
+    .stepper{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;gap:6px;align-items:center}
+    .stepper .lbl{grid-column:1/-1;width:auto;font-size:11px;margin-bottom:-2px}
+    .step{width:46px;height:46px;border-radius:12px;font-size:21px}
+    .stepper .num{width:100%;height:46px;border-radius:11px;font-size:15px}
+    .c-price{grid-area:price}
+    .price{height:46px;border-radius:11px;font-size:15px;background:var(--bg-soft);border-color:var(--line-soft)}
+    .c-status{grid-area:status}
+    .status{height:46px;border-radius:11px;font-size:13px}
+    .c-memo{grid-area:memo}
+    .memo{
+      height:44px;border-radius:11px;border-color:var(--line-soft);
+      background:rgba(255,255,255,.015);font-size:13px;padding:0 11px;
+    }
+    .c-total{grid-area:total;align-self:center;font-size:14px}
+    .toast{bottom:104px}
+    .opts summary{min-height:42px}
+    .field input{width:132px;height:44px}
+    .opts-note{max-width:none}
+  }
+
+  @media (min-width:720px) and (max-width:1099px){
+    .stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .stat .sub{display:block}
+    .sortwrap{width:auto;margin-left:auto;flex:0 1 auto}
+    .chips.toggles{flex:0 1 auto;width:auto}
+    #list{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+    .listwrap{border:0;background:none;border-radius:0;margin-top:12px}
+    .row{
+      border:1px solid var(--line);border-radius:14px;padding:12px 13px;
+      background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.008));
+    }
+    .row:hover{background:rgba(255,255,255,.035)}
+    .row:last-child{border-radius:14px}
+    .row.is-banned{box-shadow:inset 3px 0 0 rgba(239,95,107,.55)}
+    .empty{grid-column:1/-1}
+  }
+
+  @media (min-width:1100px){
+    .thead{display:grid}
+    .c-name .ko{font-size:14px}
+    .actions .btn .ic{display:none}
+    .toolbar{gap:8px}
+    .chips.toggles{flex:0 1 auto}
+    .chip{min-height:34px;padding:7px 10px;font-size:12px}
+    .chip b{font-size:10.5px}
+    .sortwrap label{font-size:11px}
+    select.sel{height:34px}
+    .c-stock{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center}
+    .stepper{display:grid;grid-template-columns:32px minmax(0,1fr) 32px;gap:4px}
+    .stepper .lbl{grid-column:1/-1;width:auto;font-size:10px;margin-bottom:-3px}
+    .step{width:32px;height:32px;border-radius:8px;font-size:16px}
+    .stepper .num{width:100%;height:32px;font-size:13px;border-radius:8px}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation:none !important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-top">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">🃏</div>
+        <div>
+          <h1>리프트바운드 재고</h1>
+          <p>Riftbound: Origins · OGN 340 인쇄본 · 한글판</p>
+        </div>
+      </div>
+      <div class="save-indicator" id="saveState"><span class="dot"></span><span id="saveText">자동 저장 켜짐</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <span class="k">총 보유</span>
+        <strong id="sQty">0<span class="u">장</span></strong>
+        <span class="sub" id="sQtySub">보유 0종</span>
+      </div>
+      <div class="stat">
+        <span class="k">등록 완료</span>
+        <strong id="sReg">0<span class="u">종</span></strong>
+        <span class="sub" id="sRegSub">미등록 0종</span>
+      </div>
+      <div class="stat accent">
+        <span class="k">예상 총액 (USD)</span>
+        <strong id="sValue">$0.00</strong>
+        <span class="sub">일반 + Foil × 단가</span>
+      </div>
+      <div class="stat net">
+        <span class="k">순수익 (수수료 14% 제외)</span>
+        <strong id="sNet">$0.00</strong>
+        <span class="sub" id="sNetSub">수수료 $0.00</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="searchbar">
+    <div class="searchbox">
+      <span class="icon" aria-hidden="true">🔍</span>
+      <input id="search" type="search" inputmode="search" autocomplete="off" spellcheck="false"
+             placeholder="번호 039 · 039/298 · OGN-039 · 카이사 · Kai'Sa"
+             aria-label="카드 검색 (번호, 한글명, 영문명)">
+      <button class="clear-btn" id="clearSearch" aria-label="검색어 지우기">✕</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="chips" id="rarChips" role="group" aria-label="희귀도 필터">
+      <button class="chip" data-rar="All" aria-pressed="true">All <b>0</b></button>
+      <button class="chip" data-rar="Epic" aria-pressed="false">Epic <b>0</b></button>
+      <button class="chip" data-rar="Rare" aria-pressed="false">Rare <b>0</b></button>
+      <button class="chip" data-rar="Uncommon" aria-pressed="false">Uncommon <b>0</b></button>
+      <button class="chip" data-rar="Common" aria-pressed="false">Common <b>0</b></button>
+      <button class="chip" data-rar="Showcase" aria-pressed="false">Showcase <b>0</b></button>
+      <button class="chip" data-rar="Overnumber" aria-pressed="false">Overnumber <b>0</b></button>
+    </div>
+    <div class="chips toggles">
+      <button class="chip toggle" id="ownedOnly" aria-pressed="false">보유 카드만</button>
+      <button class="chip toggle banned" id="hideBanned" aria-pressed="true">밴 카드 제외 <b id="banCount">2</b></button>
+      <button class="chip" id="resetFilters">필터 초기화</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="sortwrap">
+      <label for="sort">정렬</label>
+      <select class="sel" id="sort">
+        <option value="num">카드 번호</option>
+        <option value="value">금액 높은 순</option>
+        <option value="stock">보유 많은 순</option>
+        <option value="name">한글명 가나다</option>
+      </select>
+    </div>
+
+    <details class="opts" id="listingOpts">
+      <summary>리스팅 옵션 (합배송 안내 · 가격표에만 반영)</summary>
+      <div class="opts-body">
+        <div class="field">
+          <span>추가 카드 1장당 배송비 (USD)</span>
+          <input id="optExtraShip" inputmode="decimal" placeholder="0.00" autocomplete="off">
+        </div>
+        <div class="field">
+          <span>2장 이상 구매 할인 (%)</span>
+          <input id="optDiscount" inputmode="numeric" placeholder="0" autocomplete="off">
+        </div>
+        <p class="opts-note">값을 넣으면 ‘가격표 복사’ 문구에만 함께 나갑니다. 비워 두면 합배송 안내만 들어갑니다.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="btnJson"><span class="ic">💾</span>JSON 백업</button>
+    <button class="btn" id="btnImport"><span class="ic">📂</span>불러오기</button>
+    <button class="btn" id="btnCsv"><span class="ic">📄</span>eBay CSV</button>
+    <button class="btn primary" id="btnCopy"><span class="ic">📋</span>가격표 복사</button>
+    <input type="file" id="importFile" accept=".json,application/json" hidden>
+  </div>
+
+  <div class="listmeta">
+    <span id="shownCount">표시 중 <b>0</b>종</span>
+    <span id="shownHint">번호 · 한글명 · 영문명 검색</span>
+  </div>
+
+  <div class="listwrap">
+    <div class="thead">
+      <div>#</div>
+      <div>카드</div>
+      <div>재고 (일반 / Foil)</div>
+      <div>단가 USD</div>
+      <div>등록 상태</div>
+      <div>메모</div>
+      <div class="ta-r">금액</div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <footer class="foot">
+    <b>저장</b> — 입력한 내용은 이 브라우저(localStorage)에 자동 저장됩니다. 기기를 바꾸거나 브라우저 데이터를 지우면 사라지니 <b>JSON 백업</b>을 가끔 받아 두세요.
+    <br><b>금액</b> — (일반 보유 + Foil 보유) × 단가로 계산하고, 순수익은 이베이 수수료 약 14%를 뺀 값입니다. 실제 정산은 카테고리·셀러 등급에 따라 조금 다릅니다.
+    <br><b>카드 데이터</b> — Riftbound: Origins(OGN) 298장 + 대체 아트 30장 + 오버넘버 12장. 카드명·번호는 <a href="https://decks.kr/cards/set/ogn" target="_blank" rel="noopener">decks.kr</a> 한글판 표기, 희귀도는 <a href="https://riftwatch.gg/sets/ogn/" target="_blank" rel="noopener">Riftwatch</a>·CardOwners 대조. 2026-11-17 기준.
+    <br><b>밴</b> — 미끼 갈고리(242)·눈부신 오로라(160)는 글로벌 스탠다드 밴 카드라 목록에서 표시만 하고, 필요하면 ‘밴 카드 제외’로 숨깁니다.
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:20px;color:#fff">이 페이지는 JavaScript가 필요합니다.</p></noscript>
+
+<script>
+/* ============================================================
+   리프트바운드 재고 관리 — 단일 HTML, 오프라인 동작
+   ============================================================ */
+
+const KIND_EN = {'유닛':'Unit','주문':'Spell','장비':'Gear','전장':'Battlefield','전설':'Legend','룬':'Rune'};
+const DOM_EN  = {'분노':'Fury','평온':'Calm','정신':'Mind','육체':'Body','혼돈':'Chaos','질서':'Order','무속성':'Colorless'};
+const RAR_KO  = {'Common':'일반','Uncommon':'특별','Rare':'희귀','Epic':'서사','Showcase':'쇼케이스','Overnumber':'오버넘버'};
+const STATUSES = ['미등록','등록됨','품절'];
+const FEE_RATE = 0.14;
+
+/* ---- 카드 데이터: [번호, 한글명, 영문명, 희귀도, 유형, 영역, 인쇄, 밴] ---- */
+const CARDS_RAW = [
+  ["001", "타오르는 화염용", "Blazing Scorcher", "Common", "유닛", "분노", "", 0],
+  ["002", "뻔뻔한 해적", "Brazen Buccaneer", "Common", "유닛", "분노", "", 0],
+  ["003", "화학공학 집행자", "Chemtech Enforcer", "Common", "유닛", "분노", "", 0],
+  ["004", "쪼개기", "Cleave", "Common", "주문", "분노", "", 0],
+  ["005", "붕괴", "Disintegrate", "Common", "주문", "분노", "", 0],
+  ["006", "와작와작 뻥", "Flame Chompers", "Common", "유닛", "분노", "", 0],
+  ["007", "분노 룬", "Fury Rune", "Common", "룬", "분노", "", 0],
+  ["008", "신난다!", "Get Excited!", "Common", "주문", "분노", "", 0],
+  ["009", "마법공학 광선", "Hextech Ray", "Common", "주문", "분노", "", 0],
+  ["010", "군단 후위병", "Legion Rearguard", "Common", "유닛", "분노", "", 0],
+  ["011", "용암 이무기", "Magma Wurm", "Common", "유닛", "분노", "", 0],
+  ["012", "녹서스의 기대주", "Noxus Hopeful", "Common", "유닛", "분노", "", 0],
+  ["013", "뾰로통한 포로", "Pouty Poro", "Common", "유닛", "분노", "", 0],
+  ["014", "천공 분열", "Sky Splitter", "Common", "주문", "분노", "", 0],
+  ["015", "파론 대위", "Captain Farron", "Uncommon", "유닛", "분노", "", 0],
+  ["016", "위험한 듀오", "Dangerous Duo", "Uncommon", "유닛", "분노", "", 0],
+  ["017", "강철 쇠뇌", "Iron Ballista", "Uncommon", "장비", "분노", "", 0],
+  ["018", "녹서스 파괴 공작원", "Noxus Saboteur", "Uncommon", "유닛", "분노", "", 0],
+  ["019", "성난 혼령", "Raging Soul", "Uncommon", "유닛", "분노", "", 0],
+  ["020", "고철장 챔피언", "Scrapyard Champion", "Uncommon", "유닛", "분노", "", 0],
+  ["021", "태양 원판", "Sun Disc", "Uncommon", "장비", "분노", "", 0],
+  ["022", "발열 광선", "Thermo Beam", "Uncommon", "주문", "분노", "", 0],
+  ["023", "무허가 무기고", "Unlicensed Armory", "Uncommon", "장비", "분노", "", 0],
+  ["024", "공허추적자", "Void Seeker", "Uncommon", "주문", "분노", "", 0],
+  ["025", "무분별한 분노", "Blind Fury", "Rare", "주문", "분노", "", 0],
+  ["026", "브린히르 썬더송", "Brynhir Thundersong", "Rare", "유닛", "분노", "", 0],
+  ["027", "다리우스, 트리파르", "Darius, Trifarian", "Rare", "유닛", "분노", "", 0],
+  ["028", "드레이븐, 과시", "Draven, Showboat", "Rare", "유닛", "분노", "", 0],
+  ["029", "유성", "Falling Star", "Rare", "주문", "분노", "", 0],
+  ["030", "징크스, 폭파광", "Jinx, Demolitionist", "Rare", "유닛", "분노", "", 0],
+  ["031", "성난 화염용", "Raging Firebrand", "Rare", "유닛", "분노", "", 0],
+  ["032", "레이븐본 고서", "Ravenborn Tome", "Rare", "장비", "분노", "", 0],
+  ["033", "갈취", "Shakedown", "Rare", "주문", "분노", "", 0],
+  ["034", "트린다미어, 야만전사", "Tryndamere, Barbarian", "Rare", "유닛", "분노", "", 0],
+  ["035", "베인, 사냥꾼", "Vayne, Hunter", "Rare", "유닛", "분노", "", 0],
+  ["036", "바이, 파괴", "Vi, Destructive", "Rare", "유닛", "분노", "", 0],
+  ["037", "불멸의 불사조", "Immortal Phoenix", "Epic", "유닛", "분노", "", 0],
+  ["038", "지옥불 카드레그린", "Kadregrin the Infernal", "Epic", "유닛", "분노", "", 0],
+  ["039", "카이사, 생존자", "Kai'Sa, Survivor", "Epic", "유닛", "분노", "", 0],
+  ["040", "분노의 문장", "Seal of Rage", "Epic", "장비", "분노", "", 0],
+  ["041", "볼리베어, 격노", "Volibear, Furious", "Epic", "유닛", "분노", "", 0],
+  ["042", "평정 룬", "Calm Rune", "Common", "룬", "평온", "", 0],
+  ["043", "매혹", "Charm", "Common", "주문", "평온", "", 0],
+  ["044", "시계태엽 지킴이", "Clockwork Keeper", "Common", "유닛", "평온", "", 0],
+  ["045", "반항", "Defy", "Common", "주문", "평온", "", 0],
+  ["046", "준비 태세", "En Garde", "Common", "주문", "평온", "", 0],
+  ["047", "중심 잡기", "Find Your Center", "Common", "주문", "평온", "", 0],
+  ["048", "명상", "Meditation", "Common", "주문", "평온", "", 0],
+  ["049", "장난꾸러기 유령", "Playful Phantom", "Common", "유닛", "평온", "", 0],
+  ["050", "룬 감옥", "Rune Prison", "Common", "주문", "평온", "", 0],
+  ["051", "솔라리 방패지기", "Solari Shieldbearer", "Common", "유닛", "평온", "", 0],
+  ["052", "불굴의 포로", "Stalwart Poro", "Common", "유닛", "평온", "", 0],
+  ["053", "단결된 의지", "Stand United", "Common", "주문", "평온", "", 0],
+  ["054", "햇빛 수호자", "Sunlit Guardian", "Common", "유닛", "평온", "", 0],
+  ["055", "물의 주인", "Wielder of Water", "Common", "유닛", "평온", "", 0],
+  ["056", "적응형 기기", "Adaptatron", "Uncommon", "유닛", "평온", "", 0],
+  ["057", "막기", "Block", "Uncommon", "주문", "평온", "", 0],
+  ["058", "규율", "Discipline", "Uncommon", "주문", "평온", "", 0],
+  ["059", "월식의 전령", "Eclipse Herald", "Uncommon", "유닛", "평온", "", 0],
+  ["060", "예지의 가면", "Mask of Foresight", "Uncommon", "장비", "평온", "", 0],
+  ["061", "포로치기", "Poro Herder", "Uncommon", "유닛", "평온", "", 0],
+  ["062", "지원", "Reinforce", "Uncommon", "주문", "평온", "", 0],
+  ["063", "의지의 결계", "Spirit's Refuge", "Uncommon", "장비", "평온", "", 0],
+  ["064", "바람 장막", "Wind Wall", "Uncommon", "주문", "평온", "", 0],
+  ["065", "오랜 연륜의 장로", "Wizened Elder", "Uncommon", "유닛", "평온", "", 0],
+  ["066", "아리, 황홀", "Ahri, Alluring", "Rare", "유닛", "평온", "", 0],
+  ["067", "블리츠크랭크, 무감정", "Blitzcrank, Impassive", "Rare", "유닛", "평온", "", 0],
+  ["068", "케이틀린, 순찰", "Caitlyn, Patrolling", "Rare", "유닛", "평온", "", 0],
+  ["069", "최후의 저항", "Last Stand", "Rare", "주문", "평온", "", 0],
+  ["070", "마력척결관 간수", "Mageseeker Warden", "Rare", "유닛", "평온", "", 0],
+  ["071", "축제 경품", "Party Favors", "Rare", "주문", "평온", "", 0],
+  ["072", "솔라리 성지", "Solari Shrine", "Rare", "장비", "평온", "", 0],
+  ["073", "소나, 조화", "Sona, Harmonious", "Rare", "유닛", "평온", "", 0],
+  ["074", "타릭, 수호자", "Taric, Protector", "Rare", "유닛", "평온", "", 0],
+  ["075", "맛있는 요정단", "Tasty Faefolk", "Rare", "유닛", "평온", "", 0],
+  ["076", "야스오, 회한", "Yasuo, Remorseful", "Rare", "유닛", "평온", "", 0],
+  ["077", "존야의 모래시계", "Zhonya's Hourglass", "Rare", "장비", "평온", "", 0],
+  ["078", "리 신, 고행", "Lee Sin, Ascetic", "Epic", "유닛", "평온", "", 0],
+  ["079", "레오나, 신봉자", "Leona, Zealot", "Epic", "유닛", "평온", "", 0],
+  ["080", "신비한 전환", "Mystic Reversal", "Epic", "주문", "평온", "", 0],
+  ["081", "집중의 문장", "Seal of Focus", "Epic", "장비", "평온", "", 0],
+  ["082", "하얀불꽃 수호자", "Whiteflame Protector", "Epic", "유닛", "평온", "", 0],
+  ["083", "과거의 조언", "Consult the Past", "Common", "주문", "정신", "", 0],
+  ["084", "열정적인 수습생", "Eager Apprentice", "Common", "유닛", "정신", "", 0],
+  ["085", "혜성 낙하", "Falling Comet", "Common", "주문", "정신", "", 0],
+  ["086", "보석 거신", "Jeweled Colossus", "Common", "유닛", "정신", "", 0],
+  ["087", "설교하는 요들", "Lecturing Yordle", "Common", "유닛", "정신", "", 0],
+  ["088", "메가 메크", "Mega-Mech", "Common", "유닛", "정신", "", 0],
+  ["089", "정신 룬", "Mind Rune", "Common", "룬", "정신", "", 0],
+  ["090", "후회의 구슬", "Orb of Regret", "Common", "장비", "정신", "", 0],
+  ["091", "정비 팀", "Pit Crew", "Common", "유닛", "정신", "", 0],
+  ["092", "역조 렉스", "Riptide Rex", "Common", "유닛", "정신", "", 0],
+  ["093", "연막탄", "Smoke Screen", "Common", "주문", "정신", "", 0],
+  ["094", "정령 부름", "Sprite Call", "Common", "주문", "정신", "", 0],
+  ["095", "마비", "Stupefy", "Common", "주문", "정신", "", 0],
+  ["096", "감시하는 보초", "Watchful Sentry", "Common", "유닛", "정신", "", 0],
+  ["097", "솔방울탄 요정", "Blastcone Fae", "Uncommon", "유닛", "정신", "", 0],
+  ["098", "에너지 전도체", "Energy Conduit", "Uncommon", "장비", "정신", "", 0],
+  ["099", "쓰레기 수집기", "Garbage Grabber", "Uncommon", "장비", "정신", "", 0],
+  ["100", "보석 공예 예언자", "Gemcraft Seer", "Uncommon", "유닛", "정신", "", 0],
+  ["101", "버섯 주머니", "Mushroom Pouch", "Uncommon", "장비", "정신", "", 0],
+  ["102", "차원문 구출", "Portal Rescue", "Uncommon", "주문", "정신", "", 0],
+  ["103", "레이븐블룸 학생", "Ravenbloom Student", "Uncommon", "유닛", "정신", "", 0],
+  ["104", "후퇴", "Retreat", "Uncommon", "주문", "정신", "", 0],
+  ["105", "특이점", "Singularity", "Uncommon", "주문", "정신", "", 0],
+  ["106", "정령 어머니", "Sprite Mother", "Uncommon", "유닛", "정신", "", 0],
+  ["107", "열정 대원 에이바", "Ava Achiever", "Rare", "유닛", "정신", "", 0],
+  ["108", "수렴 변이", "Convergent Mutation", "Rare", "주문", "정신", "", 0],
+  ["109", "문도 박사, 전문가", "Dr. Mundo, Expert", "Rare", "유닛", "정신", "", 0],
+  ["110", "에코, 반복", "Ekko, Recurrent", "Rare", "유닛", "정신", "", 0],
+  ["111", "하이머딩거, 발명가", "Heimerdinger, Inventor", "Rare", "유닛", "정신", "", 0],
+  ["112", "카이사, 진화", "Kai'Sa, Evolutionary", "Rare", "유닛", "정신", "", 0],
+  ["113", "말자하, 광신도", "Malzahar, Fanatic", "Rare", "유닛", "정신", "", 0],
+  ["114", "진보의 날", "Progress Day", "Rare", "주문", "정신", "", 0],
+  ["115", "유망한 미래", "Promising Future", "Rare", "주문", "정신", "", 0],
+  ["116", "꼬리 천 개 주시자", "Thousand-Tailed Watcher", "Rare", "유닛", "정신", "", 0],
+  ["117", "빅토르, 혁신가", "Viktor, Innovator", "Rare", "유닛", "정신", "", 0],
+  ["118", "메아리의 망령", "Wraith of Echoes", "Rare", "유닛", "정신", "", 0],
+  ["119", "아리, 호기심", "Ahri, Inquisitive", "Epic", "유닛", "정신", "", 0],
+  ["120", "통찰의 문장", "Seal of Insight", "Epic", "장비", "정신", "", 0],
+  ["121", "티모, 전략가", "Teemo, Strategist", "Epic", "유닛", "정신", "", 0],
+  ["122", "시간 왜곡", "Time Warp", "Epic", "주문", "정신", "", 0],
+  ["123", "통제되지 않은 힘", "Unchecked Power", "Epic", "주문", "정신", "", 0],
+  ["124", "투기장 술집", "Arena Bar", "Common", "장비", "육체", "", 0],
+  ["125", "빌지워터 불량배", "Bilgewater Bully", "Common", "유닛", "육체", "", 0],
+  ["126", "신체 룬", "Body Rune", "Common", "룬", "육체", "", 0],
+  ["127", "포탄 세례", "Cannon Barrage", "Common", "주문", "육체", "", 0],
+  ["128", "도전", "Challenge", "Common", "주문", "육체", "", 0],
+  ["129", "정면 승부", "Confront", "Common", "주문", "육체", "", 0],
+  ["130", "명사수 해적", "Crackshot Corsair", "Common", "유닛", "육체", "", 0],
+  ["131", "모래 언덕 드래곤", "Dune Drake", "Common", "유닛", "육체", "", 0],
+  ["132", "일등항해사", "First Mate", "Common", "유닛", "육체", "", 0],
+  ["133", "칼날 돌풍", "Flurry of Blades", "Common", "주문", "육체", "", 0],
+  ["134", "동원", "Mobilize", "Common", "주문", "육체", "", 0],
+  ["135", "새끼 파카아", "Pakaa Cub", "Common", "유닛", "육체", "", 0],
+  ["136", "투기장 신참", "Pit Rookie", "Common", "유닛", "육체", "", 0],
+  ["137", "폭풍발톱 어사인", "Stormclaw Ursine", "Common", "유닛", "육체", "", 0],
+  ["138", "억겁의 카탈리스트", "Catalyst of Aeons", "Uncommon", "주문", "육체", "", 0],
+  ["139", "클라우드필드의 시트리아", "Cithria of Cloudfield", "Uncommon", "유닛", "육체", "", 0],
+  ["140", "비늘의 전령", "Herald of Scales", "Uncommon", "유닛", "육체", "", 0],
+  ["141", "킨코우 수도승", "Kinkou Monk", "Uncommon", "유닛", "육체", "", 0],
+  ["142", "대지의 드래곤", "Mountain Drake", "Uncommon", "유닛", "육체", "", 0],
+  ["143", "해적의 안식처", "Pirate's Haven", "Uncommon", "장비", "육체", "", 0],
+  ["144", "전리품", "Spoils of War", "Uncommon", "주문", "육체", "", 0],
+  ["145", "물러서지 않는 영혼", "Unyielding Spirit", "Uncommon", "주문", "육체", "", 0],
+  ["146", "쿵쾅", "Wallop", "Uncommon", "주문", "육체", "", 0],
+  ["147", "거친발톱 주술사", "Wildclaw Shaman", "Uncommon", "유닛", "육체", "", 0],
+  ["148", "애니비아, 원시", "Anivia, Primal", "Rare", "유닛", "육체", "", 0],
+  ["149", "육식성 덩굴", "Carnivorous Snapvine", "Rare", "유닛", "육체", "", 0],
+  ["150", "크라켄 사냥꾼", "Kraken Hunter", "Rare", "유닛", "육체", "", 0],
+  ["151", "리 신, 집중", "Lee Sin, Centered", "Rare", "유닛", "육체", "", 0],
+  ["152", "안개폭포", "Mistfall", "Rare", "장비", "육체", "", 0],
+  ["153", "대담한 작전", "Overt Operation", "Rare", "주문", "육체", "", 0],
+  ["154", "원시의 힘", "Primal Strength", "Rare", "주문", "육체", "", 0],
+  ["155", "키아나, 승리자", "Qiyana, Victorious", "Rare", "유닛", "육체", "", 0],
+  ["156", "파괴 공작", "Sabotage", "Rare", "주문", "육체", "", 0],
+  ["157", "우디르, 야인", "Udyr, Wildman", "Rare", "유닛", "육체", "", 0],
+  ["158", "볼리베어, 위압", "Volibear, Imposing", "Rare", "유닛", "육체", "", 0],
+  ["159", "워윅, 사냥꾼", "Warwick, Hunter", "Rare", "유닛", "육체", "", 0],
+  ["160", "눈부신 오로라", "Dazzling Aurora", "Epic", "장비", "육체", "", 1],
+  ["161", "죽음꽃 포식자", "Deadbloom Predator", "Epic", "유닛", "육체", "", 0],
+  ["162", "미스 포츈, 선장", "Miss Fortune, Captain", "Epic", "유닛", "육체", "", 0],
+  ["163", "힘의 문장", "Seal of Strength", "Epic", "장비", "육체", "", 0],
+  ["164", "세트, 싸움꾼", "Sett, Brawler", "Epic", "유닛", "육체", "", 0],
+  ["165", "묘지 관리인", "Cemetery Attendant", "Common", "유닛", "혼돈", "", 0],
+  ["166", "혼돈 룬", "Chaos Rune", "Common", "룬", "혼돈", "", 0],
+  ["167", "불꽃 수도승", "Ember Monk", "Common", "유닛", "혼돈", "", 0],
+  ["168", "싸우거나 도망치거나", "Fight or Flight", "Common", "주문", "혼돈", "", 0],
+  ["169", "돌풍", "Gust", "Common", "주문", "혼돈", "", 0],
+  ["170", "소름끼치는 귀환", "Morbid Return", "Common", "주문", "혼돈", "", 0],
+  ["171", "신비한 포로", "Mystic Poro", "Common", "유닛", "혼돈", "", 0],
+  ["172", "처벌", "Rebuke", "Common", "주문", "혼돈", "", 0],
+  ["173", "바람을 타고", "Ride the Wind", "Common", "주문", "혼돈", "", 0],
+  ["174", "사막 정찰꾼", "Sai Scout", "Common", "유닛", "혼돈", "", 0],
+  ["175", "조선소 잠복꾼", "Shipyard Skulker", "Common", "유닛", "혼돈", "", 0],
+  ["176", "교활한 갑판원", "Sneaky Deckhand", "Common", "유닛", "혼돈", "", 0],
+  ["177", "은밀한 추적자", "Stealthy Pursuer", "Common", "유닛", "혼돈", "", 0],
+  ["178", "잠입 요원", "Undercover Agent", "Common", "유닛", "혼돈", "", 0],
+  ["179", "허용 손실", "Acceptable Losses", "Uncommon", "주문", "혼돈", "", 0],
+  ["180", "바래지는 기억", "Fading Memories", "Uncommon", "주문", "혼돈", "", 0],
+  ["181", "불가사의한 꾸러미", "Pack of Wonders", "Uncommon", "장비", "혼돈", "", 0],
+  ["182", "고철 더미", "Scrapheap", "Uncommon", "장비", "혼돈", "", 0],
+  ["183", "속임수 덱", "Stacked Deck", "Uncommon", "주문", "혼돈", "", 0],
+  ["184", "사이렌호", "The Syren", "Uncommon", "장비", "혼돈", "", 0],
+  ["185", "행상인", "Traveling Merchant", "Uncommon", "유닛", "혼돈", "", 0],
+  ["186", "보물 창고", "Treasure Trove", "Uncommon", "장비", "혼돈", "", 0],
+  ["187", "회오리바람", "Whirlwind", "Uncommon", "주문", "혼돈", "", 0],
+  ["188", "자운 문지기", "Zaunite Bouncer", "Uncommon", "유닛", "혼돈", "", 0],
+  ["189", "케인, 해방", "Kayn, Unleashed", "Rare", "유닛", "혼돈", "", 0],
+  ["190", "코그모, 부식", "Kog'Maw, Caustic", "Rare", "유닛", "혼돈", "", 0],
+  ["191", "정신 나간 습격자", "Maddened Marauder", "Rare", "유닛", "혼돈", "", 0],
+  ["192", "정신 분쇄자", "Mindsplitter", "Rare", "유닛", "혼돈", "", 0],
+  ["193", "미스 포츈, 해적단", "Miss Fortune, Buccaneer", "Rare", "유닛", "혼돈", "", 0],
+  ["194", "녹턴, 공포", "Nocturne, Horrifying", "Rare", "유닛", "혼돈", "", 0],
+  ["195", "파괴자 라사", "Rhasa the Sunderer", "Rare", "유닛", "혼돈", "", 0],
+  ["196", "영혼탐식자", "Soulgorger", "Rare", "유닛", "혼돈", "", 0],
+  ["197", "티모, 정찰병", "Teemo, Scout", "Rare", "유닛", "혼돈", "", 0],
+  ["198", "해로윙", "The Harrowing", "Rare", "주문", "혼돈", "", 0],
+  ["199", "파도전환자", "Tideturner", "Rare", "유닛", "혼돈", "", 0],
+  ["200", "트위스티드 페이트, 도박꾼", "Twisted Fate, Gambler", "Rare", "유닛", "혼돈", "", 0],
+  ["201", "시간선 뒤집기", "Invert Timelines", "Epic", "주문", "혼돈", "", 0],
+  ["202", "징크스, 반항아", "Jinx, Rebel", "Epic", "유닛", "혼돈", "", 0],
+  ["203", "지배", "Possession", "Epic", "주문", "혼돈", "", 0],
+  ["204", "불화의 문장", "Seal of Discord", "Epic", "장비", "혼돈", "", 0],
+  ["205", "야스오, 바람을 타는 자", "Yasuo, Windrider", "Epic", "유닛", "혼돈", "", 0],
+  ["206", "등에 등을 맞대고", "Back to Back", "Common", "주문", "질서", "", 0],
+  ["207", "영광의 부름", "Call to Glory", "Common", "주문", "질서", "", 0],
+  ["208", "잔인한 후원자", "Cruel Patron", "Common", "유닛", "질서", "", 0],
+  ["209", "약자 도륙", "Cull the Weak", "Common", "주문", "질서", "", 0],
+  ["210", "대담한 포로", "Daring Poro", "Common", "유닛", "질서", "", 0],
+  ["211", "충직한 제작자", "Faithful Manufactor", "Common", "유닛", "질서", "", 0],
+  ["212", "미래의 대장간", "Forge of the Future", "Common", "장비", "질서", "", 0],
+  ["213", "숨겨진 칼날", "Hidden Blade", "Common", "주문", "질서", "", 0],
+  ["214", "질서 룬", "Order Rune", "Common", "룬", "질서", "", 0],
+  ["215", "갑판장", "Petty Officer", "Common", "유닛", "질서", "", 0],
+  ["216", "높이 나는 정찰병", "Soaring Scout", "Common", "유닛", "질서", "", 0],
+  ["217", "영광을 좇는 트리파르 병사", "Trifarian Gloryseeker", "Common", "유닛", "질서", "", 0],
+  ["218", "선봉대 대장", "Vanguard Captain", "Common", "유닛", "질서", "", 0],
+  ["219", "선봉대 병장", "Vanguard Sergeant", "Common", "유닛", "질서", "", 0],
+  ["220", "안면 강타", "Facebreaker", "Uncommon", "주문", "질서", "", 0],
+  ["221", "제국의 법령", "Imperial Decree", "Uncommon", "주문", "질서", "", 0],
+  ["222", "녹서스 군악대", "Noxian Drummer", "Uncommon", "유닛", "질서", "", 0],
+  ["223", "봉우리 수호자", "Peak Guardian", "Uncommon", "유닛", "질서", "", 0],
+  ["224", "인양", "Salvage", "Uncommon", "주문", "질서", "", 0],
+  ["225", "솔라리 대장", "Solari Chief", "Uncommon", "유닛", "질서", "", 0],
+  ["226", "유령 부인", "Spectral Matron", "Uncommon", "유닛", "질서", "", 0],
+  ["227", "솔라리의 상징", "Symbol of the Solari", "Uncommon", "장비", "질서", "", 0],
+  ["228", "선봉대 투구", "Vanguard Helm", "Uncommon", "장비", "질서", "", 0],
+  ["229", "복수", "Vengeance", "Uncommon", "주문", "질서", "", 0],
+  ["230", "알버스 페로스", "Albus Ferros", "Rare", "유닛", "질서", "", 0],
+  ["231", "사령관 레드로스", "Commander Ledros", "Rare", "유닛", "질서", "", 0],
+  ["232", "피오라, 승리자", "Fiora, Victorious", "Rare", "유닛", "질서", "", 0],
+  ["233", "웅장한 책략", "Grand Strategem", "Rare", "주문", "질서", "", 0],
+  ["234", "길들인 드래곤", "Harnessed Dragon", "Rare", "유닛", "질서", "", 0],
+  ["235", "카르마, 정신 집중", "Karma, Channeler", "Rare", "유닛", "질서", "", 0],
+  ["236", "카서스, 영원", "Karthus, Eternal", "Rare", "유닛", "질서", "", 0],
+  ["237", "왕의 칙령", "King's Edict", "Rare", "주문", "질서", "", 0],
+  ["238", "레오나, 결연", "Leona, Determined", "Rare", "유닛", "질서", "", 0],
+  ["239", "기계 복음", "Machine Evangel", "Rare", "유닛", "질서", "", 0],
+  ["240", "세트, 두목", "Sett, Kingpin", "Rare", "유닛", "질서", "", 0],
+  ["241", "쉔, 킨코우", "Shen, Kinkou", "Rare", "유닛", "질서", "", 0],
+  ["242", "미끼 갈고리", "Baited Hook", "Epic", "장비", "질서", "", 1],
+  ["243", "다리우스, 처형자", "Darius, Executioner", "Epic", "유닛", "질서", "", 0],
+  ["244", "신성한 심판", "Divine Judgment", "Epic", "주문", "질서", "", 0],
+  ["245", "단합의 문장", "Seal of Unity", "Epic", "장비", "질서", "", 0],
+  ["246", "빅토르, 지도자", "Viktor, Leader", "Epic", "유닛", "질서", "", 0],
+  ["247", "공허의 딸", "Daughter of the Void", "Rare", "전설", "분노 / 정신", "", 0],
+  ["248", "이케시아 폭우, 카이사", "Icathian Rain", "Epic", "주문", "분노 / 정신", "", 0],
+  ["249", "무자비한 폭풍", "Relentless Storm", "Rare", "전설", "분노 / 육체", "", 0],
+  ["250", "폭풍을 부르는 자, 볼리베어", "Stormbringer", "Epic", "주문", "분노 / 육체", "", 0],
+  ["251", "난폭한 말괄량이", "Loose Cannon", "Rare", "전설", "분노 / 혼돈", "", 0],
+  ["252", "초강력 초토화 로켓!, 징크스", "Super Mega Death Rocket!", "Epic", "주문", "분노 / 혼돈", "", 0],
+  ["253", "녹서스의 실력자", "Hand of Noxus", "Rare", "전설", "분노 / 질서", "", 0],
+  ["254", "녹서스의 단두대, 다리우스", "Noxian Guillotine", "Epic", "주문", "분노 / 질서", "", 0],
+  ["255", "구미호", "Nine-Tailed Fox", "Rare", "전설", "평온 / 정신", "", 0],
+  ["256", "여우불, 아리", "Fox-Fire", "Epic", "주문", "평온 / 정신", "", 0],
+  ["257", "눈먼 수도승", "Blind Monk", "Rare", "전설", "평온 / 육체", "", 0],
+  ["258", "용의 분노, 리 신", "Dragon's Rage", "Epic", "주문", "평온 / 육체", "", 0],
+  ["259", "용서받지 못한 자", "Unforgiven", "Rare", "전설", "평온 / 혼돈", "", 0],
+  ["260", "최후의 숨결, 야스오", "Last Breath", "Epic", "주문", "평온 / 혼돈", "", 0],
+  ["261", "여명의 빛", "Radiant Dawn", "Rare", "전설", "평온 / 질서", "", 0],
+  ["262", "천공의 검, 레오나", "Zenith Blade", "Epic", "주문", "평온 / 질서", "", 0],
+  ["263", "날쌘 정찰병", "Swift Scout", "Rare", "전설", "정신 / 혼돈", "", 0],
+  ["264", "유격 전투, 티모", "Guerilla Warfare", "Epic", "주문", "정신 / 혼돈", "", 0],
+  ["265", "아케인의 전령관", "Herald of the Arcane", "Rare", "전설", "정신 / 질서", "", 0],
+  ["266", "힘의 흡수, 빅토르", "Siphon Power", "Epic", "주문", "정신 / 질서", "", 0],
+  ["267", "현상금 사냥꾼", "Bounty Hunter", "Rare", "전설", "육체 / 혼돈", "", 0],
+  ["268", "쌍권총 난사, 미스 포츈", "Bullet Time", "Epic", "주문", "육체 / 혼돈", "", 0],
+  ["269", "우두머리", "The Boss", "Rare", "전설", "육체 / 질서", "", 0],
+  ["270", "대미 장식, 세트", "Showstopper", "Epic", "주문", "육체 / 질서", "", 0],
+  ["271", "신병 (DE)", "Recruit (DE)", "Common", "유닛", "무속성", "", 0],
+  ["272", "신병 (NX)", "Recruit (NX)", "Common", "유닛", "무속성", "", 0],
+  ["273", "신병 (ZN)", "Recruit (ZN)", "Common", "유닛", "무속성", "", 0],
+  ["274", "정령", "Sprite", "Common", "유닛", "무속성", "", 0],
+  ["275", "단합의 제단", "Altar to Unity", "Uncommon", "전장", "무속성", "", 0],
+  ["276", "수행자의 오르막", "Aspirant's Climb", "Uncommon", "전장", "무속성", "", 0],
+  ["277", "뒷골목 술집", "Back-Alley Bar", "Uncommon", "전장", "무속성", "", 0],
+  ["278", "밴들 나무", "Bandle Tree", "Uncommon", "전장", "무속성", "", 0],
+  ["279", "요새화 진형", "Fortified Position", "Uncommon", "전장", "무속성", "", 0],
+  ["280", "신의 버드나무 숲", "Grove of the God-Willow", "Uncommon", "전장", "무속성", "", 0],
+  ["281", "신성한 무덤", "Hallowed Tomb", "Uncommon", "전장", "무속성", "", 0],
+  ["282", "히라나 수도원", "Monastery of Hirana", "Uncommon", "전장", "무속성", "", 0],
+  ["283", "나보리 투기장", "Navori Fighting Pit", "Uncommon", "전장", "무속성", "", 0],
+  ["284", "힘의 오벨리스크", "Obelisk of Power", "Uncommon", "전장", "무속성", "", 0],
+  ["285", "약탈자의 노", "Reaver's Row", "Uncommon", "전장", "무속성", "", 0],
+  ["286", "검투사 투기장", "Reckoner's Arena", "Uncommon", "전장", "무속성", "", 0],
+  ["287", "폭풍의 인장", "Sigil of the Storm", "Uncommon", "전장", "무속성", "", 0],
+  ["288", "별 봉우리", "Startipped Peak", "Uncommon", "전장", "무속성", "", 0],
+  ["289", "타곤의 봉우리", "Targon's Peak", "Uncommon", "전장", "무속성", "", 0],
+  ["290", "투기장의 최고봉", "The Arena's Greatest", "Uncommon", "전장", "무속성", "", 0],
+  ["291", "촛불 성소", "The Candlelit Sanctum", "Uncommon", "전장", "무속성", "", 0],
+  ["292", "꿈꾸는 나무", "The Dreaming Tree", "Uncommon", "전장", "무속성", "", 0],
+  ["293", "대광장", "The Grand Plaza", "Uncommon", "전장", "무속성", "", 0],
+  ["294", "트리파르 주둔지", "Trifarian War Camp", "Uncommon", "전장", "무속성", "", 0],
+  ["295", "썩은 아귀 둥지", "Vilemaw's Lair", "Uncommon", "전장", "무속성", "", 0],
+  ["296", "공허의 문", "Void Gate", "Uncommon", "전장", "무속성", "", 0],
+  ["297", "바람이 부는 언덕", "Windswept Hillock", "Uncommon", "전장", "무속성", "", 0],
+  ["298", "자운 땅굴", "Zaun Warrens", "Uncommon", "전장", "무속성", "", 0],
+  ["007a", "분노 룬", "Fury Rune", "Showcase", "룬", "분노", "대체 아트", 0],
+  ["027a", "다리우스, 트리파르", "Darius, Trifarian", "Showcase", "유닛", "분노", "대체 아트", 0],
+  ["030a", "징크스, 폭파광", "Jinx, Demolitionist", "Showcase", "유닛", "분노", "대체 아트", 0],
+  ["039a", "카이사, 생존자", "Kai'Sa, Survivor", "Showcase", "유닛", "분노", "대체 아트", 0],
+  ["041a", "볼리베어, 격노", "Volibear, Furious", "Showcase", "유닛", "분노", "대체 아트", 0],
+  ["042a", "평정 룬", "Calm Rune", "Showcase", "룬", "평온", "대체 아트", 0],
+  ["066a", "아리, 황홀", "Ahri, Alluring", "Showcase", "유닛", "평온", "대체 아트", 0],
+  ["076a", "야스오, 회한", "Yasuo, Remorseful", "Showcase", "유닛", "평온", "대체 아트", 0],
+  ["078a", "리 신, 고행", "Lee Sin, Ascetic", "Showcase", "유닛", "평온", "대체 아트", 0],
+  ["079a", "레오나, 신봉자", "Leona, Zealot", "Showcase", "유닛", "평온", "대체 아트", 0],
+  ["089a", "정신 룬", "Mind Rune", "Showcase", "룬", "정신", "대체 아트", 0],
+  ["112a", "카이사, 진화", "Kai'Sa, Evolutionary", "Showcase", "유닛", "정신", "대체 아트", 0],
+  ["117a", "빅토르, 혁신가", "Viktor, Innovator", "Showcase", "유닛", "정신", "대체 아트", 0],
+  ["119a", "아리, 호기심", "Ahri, Inquisitive", "Showcase", "유닛", "정신", "대체 아트", 0],
+  ["121a", "티모, 전략가", "Teemo, Strategist", "Showcase", "유닛", "정신", "대체 아트", 0],
+  ["126a", "신체 룬", "Body Rune", "Showcase", "룬", "육체", "대체 아트", 0],
+  ["151a", "리 신, 집중", "Lee Sin, Centered", "Showcase", "유닛", "육체", "대체 아트", 0],
+  ["158a", "볼리베어, 위압", "Volibear, Imposing", "Showcase", "유닛", "육체", "대체 아트", 0],
+  ["162a", "미스 포츈, 선장", "Miss Fortune, Captain", "Showcase", "유닛", "육체", "대체 아트", 0],
+  ["164a", "세트, 싸움꾼", "Sett, Brawler", "Showcase", "유닛", "육체", "대체 아트", 0],
+  ["166a", "혼돈 룬", "Chaos Rune", "Showcase", "룬", "혼돈", "대체 아트", 0],
+  ["193a", "미스 포츈, 해적단", "Miss Fortune, Buccaneer", "Showcase", "유닛", "혼돈", "대체 아트", 0],
+  ["197a", "티모, 정찰병", "Teemo, Scout", "Showcase", "유닛", "혼돈", "대체 아트", 0],
+  ["202a", "징크스, 반항아", "Jinx, Rebel", "Showcase", "유닛", "혼돈", "대체 아트", 0],
+  ["205a", "야스오, 바람을 타는 자", "Yasuo, Windrider", "Showcase", "유닛", "혼돈", "대체 아트", 0],
+  ["214a", "질서 룬", "Order Rune", "Showcase", "룬", "질서", "대체 아트", 0],
+  ["238a", "레오나, 결연", "Leona, Determined", "Showcase", "유닛", "질서", "대체 아트", 0],
+  ["240a", "세트, 두목", "Sett, Kingpin", "Showcase", "유닛", "질서", "대체 아트", 0],
+  ["243a", "다리우스, 처형자", "Darius, Executioner", "Showcase", "유닛", "질서", "대체 아트", 0],
+  ["246a", "빅토르, 지도자", "Viktor, Leader", "Showcase", "유닛", "질서", "대체 아트", 0],
+  ["299", "공허의 딸", "Daughter of the Void", "Overnumber", "전설", "분노 / 정신", "오버넘버", 0],
+  ["300", "무자비한 폭풍", "Relentless Storm", "Overnumber", "전설", "분노 / 육체", "오버넘버", 0],
+  ["301", "난폭한 말괄량이", "Loose Cannon", "Overnumber", "전설", "분노 / 혼돈", "오버넘버", 0],
+  ["302", "녹서스의 실력자", "Hand of Noxus", "Overnumber", "전설", "분노 / 질서", "오버넘버", 0],
+  ["303", "구미호", "Nine-Tailed Fox", "Overnumber", "전설", "평온 / 정신", "오버넘버", 0],
+  ["304", "눈먼 수도승", "Blind Monk", "Overnumber", "전설", "평온 / 육체", "오버넘버", 0],
+  ["305", "용서받지 못한 자", "Unforgiven", "Overnumber", "전설", "평온 / 혼돈", "오버넘버", 0],
+  ["306", "여명의 빛", "Radiant Dawn", "Overnumber", "전설", "평온 / 질서", "오버넘버", 0],
+  ["307", "날쌘 정찰병", "Swift Scout", "Overnumber", "전설", "정신 / 혼돈", "오버넘버", 0],
+  ["308", "아케인의 전령관", "Herald of the Arcane", "Overnumber", "전설", "정신 / 질서", "오버넘버", 0],
+  ["309", "현상금 사냥꾼", "Bounty Hunter", "Overnumber", "전설", "육체 / 혼돈", "오버넘버", 0],
+  ["310", "우두머리", "The Boss", "Overnumber", "전설", "육체 / 질서", "오버넘버", 0]
+];
+
+const DOM_KEY = {'분노':'fury','평온':'calm','정신':'mind','육체':'body','혼돈':'chaos','질서':'order','무속성':'none'};
+
+const CARDS = CARDS_RAW.map(function(a, i){
+  var num=a[0], ko=a[1], en=a[2], rar=a[3], kind=a[4], dom=a[5], variant=a[6], banned=a[7];
+  return {
+    i:i, id:num, num:num, ko:ko, en:en, rar:rar, kind:kind, dom:dom,
+    variant:variant, banned:!!banned,
+    key:num.toLowerCase().replace(/^0+(?=\d)/,''),
+    search:[
+      num, num+'/298', 'OGN-'+num, 'OGN'+num,
+      ko, en, rar, RAR_KO[rar]||'', kind, KIND_EN[kind]||'',
+      dom, dom.split(' / ').map(function(d){return DOM_EN[d]||d;}).join(' '),
+      variant
+    ].join(' ').toLowerCase()
+  };
+});
+const BY_ID = {};
+CARDS.forEach(function(c){ BY_ID[c.id]=c; });
+
+/* 공식 한글명과 달리 흔히 쓰이는 이름·영문명 별칭 (검색용) */
+const ALIAS = {
+  '039':'카이사 생존자',
+  '040':'분노 문장 seal of rage',
+  '081':'집중 문장 seal of focus',
+  '120':'통찰 문장 seal of insight',
+  '156':'사보타주 sabotage',
+  '163':'힘 문장 seal of strength',
+  '204':'불화 문장 seal of discord',
+  '245':'단합 문장 seal of unity',
+  '248':'이케시아의 폭우',
+  '270':'쇼스토퍼'
+};
+CARDS.forEach(function(c){ if(ALIAS[c.id]) c.search += ' ' + ALIAS[c.id].toLowerCase(); });
+
+const EMPTY = Object.freeze({q:0,f:0,p:'',s:'미등록',m:''});
+const LS_KEY = 'riftbound-inventory-v1';
+
+var state = {
+  cards:{},
+  opts:{extraShip:'', discount:''},
+  filters:{rar:'All', owned:false, hideBanned:true, sort:'num'},
+  query:''
+};
+
+var storageOK = (function(){
+  try{
+    var k = '__riftbound_test__';
+    localStorage.setItem(k,'1');
+    localStorage.removeItem(k);
+    return true;
+  }catch(e){ return false; }
+})();
+
+var listEl = document.getElementById('list');
+var toastEl = document.getElementById('toast');
+var toastTimer = null;
+
+/* ---------------- 유틸 ---------------- */
+function rec(id){ return state.cards[id] || EMPTY; }
+function esc(s){
+  return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function clampQty(v){
+  var n = parseInt(String(v).replace(/[^\d-]/g,''),10);
+  if(!isFinite(n) || n<0) return 0;
+  return Math.min(n, 9999);
+}
+function parsePrice(v){
+  var raw = String(v==null?'':v);
+  if(raw.indexOf('-') > -1) return 0;
+  var s = raw.trim().replace(/[^\d.,]/g,'');
+  if(!s) return 0;
+  if(s.indexOf('.')>-1) s = s.replace(/,/g,'');
+  else s = s.replace(',', '.');
+  var n = parseFloat(s);
+  return (isFinite(n) && n>0) ? Math.round(n*100)/100 : 0;
+}
+function priceOf(r){ return parsePrice(r.p); }
+function valueOf(c){
+  var r = rec(c.id);
+  return (r.q + r.f) * priceOf(r);
+}
+function fmtUsd(n){
+  n = Number(n)||0;
+  return '$' + n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtInt(n){ return (Number(n)||0).toLocaleString('en-US'); }
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2600);
+}
+
+/* ---------------- 검색 ---------------- */
+function parseNumQuery(raw){
+  var q = String(raw).trim().toUpperCase().replace(/\s+/g,'');
+  q = q.replace(/^#/,'');
+  q = q.replace(/^OGN[-_ ]?/,'');
+  q = q.replace(/\/298$/,'');
+  if(!/^\d{1,3}[A-Z*]?$/.test(q)) return null;
+  return q.replace(/^0+(?=\d)/,'').toLowerCase();
+}
+
+function matches(c){
+  var f = state.filters;
+  if(f.hideBanned && c.banned) return false;
+  if(f.rar !== 'All' && c.rar !== f.rar) return false;
+
+  var r = rec(c.id);
+  if(f.owned && (r.q + r.f) <= 0) return false;
+
+  var raw = state.query.trim();
+  if(!raw) return true;
+
+  var nq = parseNumQuery(raw);
+  if(nq !== null){
+    if(c.key === nq) return true;
+    var exactOnly = /\/298\s*$/.test(raw.trim());
+    if(!exactOnly && nq.length >= 2 && c.key.indexOf(nq) === 0) return true;
+  }
+
+  var hay = c.search;
+  var r2 = state.cards[c.id];
+  if(r2 && r2.m) hay += ' ' + String(r2.m).toLowerCase();
+  if(r2 && r2.s) hay += ' ' + String(r2.s).toLowerCase();
+
+  var toks = raw.toLowerCase().split(/\s+/).filter(Boolean);
+  for(var i=0;i<toks.length;i++){
+    if(hay.indexOf(toks[i]) === -1) return false;
+  }
+  return true;
+}
+
+/* ---------------- 렌더 ---------------- */
+function sortCards(arr){
+  var s = state.filters.sort;
+  var copy = arr.slice();
+  if(s === 'value'){
+    copy.sort(function(a,b){ var d = valueOf(b)-valueOf(a); return d || a.i-b.i; });
+  } else if(s === 'stock'){
+    copy.sort(function(a,b){ var ra=rec(a.id), rb=rec(b.id); var d=(rb.q+rb.f)-(ra.q+ra.f); return d || a.i-b.i; });
+  } else if(s === 'name'){
+    copy.sort(function(a,b){ return a.ko.localeCompare(b.ko,'ko') || a.i-b.i; });
+  } else {
+    copy.sort(function(a,b){ return a.i-b.i; });
+  }
+  return copy;
+}
+
+function stepperHTML(field, label, val){
+  return '<div class="stepper '+(field==='f'?'foil':'')+(val?'':' is-zero')+'" data-field="'+field+'">'
+    + '<span class="lbl">'+label+'</span>'
+    + '<button type="button" class="step minus" data-act="dec" data-field="'+field+'" aria-label="'+label+' 수량 1 줄이기">−</button>'
+    + '<input class="num" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" value="'+val+'" data-field="'+field+'" aria-label="'+label+' 보유 수량">'
+    + '<button type="button" class="step plus" data-act="inc" data-field="'+field+'" aria-label="'+label+' 수량 1 늘리기">+</button>'
+    + '</div>';
+}
+
+function rowHTML(c){
+  var r = rec(c.id);
+  var doms = c.dom.split(' / ');
+  var value = valueOf(c);
+  var out = (r.q + r.f) === 0;
+
+  return '<article class="row'+(c.banned?' is-banned':'')+'" data-id="'+esc(c.id)+'" data-rar="'+esc(c.rar)+'">'
+    + '<div class="c-no"><span class="no">'+esc(c.num)+'</span><span class="den">/298</span></div>'
+    + '<div class="c-name">'
+      + '<div class="ko">'+esc(c.ko)+'</div>'
+      + '<div class="en" title="'+esc(c.en)+'">'+esc(c.en)+'</div>'
+      + '<div class="badges">'
+        + '<span class="pill rar-'+c.rar.toLowerCase()+'" title="'+esc(RAR_KO[c.rar]||c.rar)+'">'+esc(c.rar)+'</span>'
+        + '<span class="pill">'+esc(c.kind)+'</span>'
+        + doms.map(function(d){ return '<span class="pill dom-'+DOM_KEY[d]+'">'+esc(d)+'</span>'; }).join('')
+        + (c.variant ? '<span class="pill variant">'+esc(c.variant)+'</span>' : '')
+        + (c.banned ? '<span class="pill banned" title="글로벌 스탠다드 밴 카드">BANNED</span>' : '')
+      + '</div>'
+    + '</div>'
+    + '<div class="c-stock">'+stepperHTML('q','일반',r.q)+stepperHTML('f','Foil',r.f)+'</div>'
+    + '<div class="c-foot">'
+    + '<div class="c-price"><span class="cur">$</span><input class="price" type="text" inputmode="decimal" autocomplete="off" placeholder="0.00" value="'+esc(r.p)+'" aria-label="'+esc(c.ko)+' 이베이 판매 단가(USD)"></div>'
+    + '<div class="c-status"><select class="status" data-v="'+esc(r.s)+'" aria-label="'+esc(c.ko)+' 등록 상태">'
+      + STATUSES.map(function(s){ return '<option value="'+s+'"'+(r.s===s?' selected':'')+'>'+s+'</option>'; }).join('')
+      + '</select></div>'
+    + '<div class="c-memo"><input class="memo" type="text" autocomplete="off" placeholder="메모" value="'+esc(r.m)+'" aria-label="'+esc(c.ko)+' 메모"></div>'
+    + '<div class="c-total'+(value>0?' has':' zero')+'">'+fmtUsd(value)+'</div>'
+    + '</div>'
+  + '</article>';
+}
+
+function render(){
+  var visible = sortCards(CARDS.filter(matches));
+  if(visible.length === 0){
+    listEl.innerHTML = '<div class="empty"><strong>조건에 맞는 카드가 없어요</strong>'
+      + '<div class="hint">검색어를 지우거나 ‘필터 초기화’를 눌러 보세요.<br>번호는 039 · 039/298 · OGN-039 어느 쪽으로도 찾아집니다.</div></div>';
+  } else {
+    var html = '';
+    for(var i=0;i<visible.length;i++) html += rowHTML(visible[i]);
+    listEl.innerHTML = html;
+  }
+  var sc = document.getElementById('shownCount');
+  if(sc) sc.innerHTML = '표시 중 <b>'+fmtInt(visible.length)+'</b> / '+CARDS.length+'종';
+  updateSummary(visible.length);
+  var cb = document.getElementById('clearSearch');
+  if(state.query) cb.classList.add('show'); else cb.classList.remove('show');
+}
+
+function updateRowValue(row, c){
+  var v = valueOf(c);
+  var el = row.querySelector('.c-total');
+  el.textContent = fmtUsd(v);
+  el.classList.toggle('has', v>0);
+  el.classList.toggle('zero', v===0);
+  row.classList.toggle('is-out', (rec(c.id).q + rec(c.id).f) === 0);
+}
+
+function updateSummary(visibleCount){
+  var qty=0, foil=0, kinds=0, reg=0, unreg=0, value=0;
+
+  for(var i=0;i<CARDS.length;i++){
+    var c = CARDS[i];
+    var r = state.cards[c.id];
+    if(!r) continue;
+    var s = (r.q||0) + (r.f||0);
+    if(s>0){
+      qty += s; foil += (r.f||0); kinds++; value += s * priceOf(r);
+    }
+    if(s > 0){
+      if(r.s === '등록됨') reg++;
+      else if(r.s === '미등록') unreg++;
+    }
+  }
+
+  document.getElementById('sQty').innerHTML = fmtInt(qty)+'<span class="u">장</span>';
+  document.getElementById('sQtySub').textContent = '보유 '+kinds+'종' + (foil ? ' · Foil '+fmtInt(foil)+'장' : '');
+  document.getElementById('sReg').innerHTML = fmtInt(reg)+'<span class="u">종</span>';
+  document.getElementById('sRegSub').textContent = '미등록 '+fmtInt(unreg)+'종';
+  document.getElementById('sValue').textContent = fmtUsd(value);
+  document.getElementById('sNet').textContent = fmtUsd(value*(1-FEE_RATE));
+  document.getElementById('sNetSub').textContent = '수수료 '+fmtUsd(value*FEE_RATE);
+
+
+}
+
+/* ---------------- 저장 ---------------- */
+var saveTimer = null;
+function setSaveState(mode){
+  var box = document.getElementById('saveState');
+  var txt = document.getElementById('saveText');
+  if(mode === 'saving'){
+    if(!storageOK) return;
+    box.classList.add('saving'); txt.textContent = '저장 중…'; return;
+  }
+  if(mode === 'error'){
+    box.classList.remove('saving');
+    box.classList.add('save-error');
+    txt.textContent = '자동 저장 불가 · JSON 백업 사용';
+    return;
+  }
+  box.classList.remove('saving'); box.classList.remove('save-error');
+  txt.textContent = '저장됨 · ' + new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+}
+
+function prune(){
+  var out = {};
+  Object.keys(state.cards).forEach(function(id){
+    var r = state.cards[id];
+    if(!r) return;
+    if((r.q||0)===0 && (r.f||0)===0 && !r.p && !r.m && (r.s==='미등록'||!r.s)) return;
+    out[id] = r;
+  });
+  state.cards = out;
+}
+
+function payload(){
+  return {
+    app:'riftbound-inventory',
+    version:1,
+    savedAt:new Date().toISOString(),
+    cards:state.cards,
+    opts:state.opts,
+    filters:state.filters
+  };
+}
+
+function persist(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(payload())); }
+  catch(e){ storageOK = false; setSaveState('error'); }
+}
+
+function scheduleSave(){
+  setSaveState('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(function(){ prune(); persist(); setSaveState(storageOK ? 'saved' : 'error'); }, 300);
+}
+
+function load(){
+  var raw = null;
+  try{ raw = localStorage.getItem(LS_KEY); }catch(e){}
+  if(raw){
+    try{
+      var d = JSON.parse(raw);
+      if(d && d.cards && typeof d.cards === 'object'){
+        Object.keys(d.cards).forEach(function(id){
+          if(!BY_ID[id]) return;
+          var v = d.cards[id] || {};
+          state.cards[id] = {
+            q: clampQty(v.q),
+            f: clampQty(v.f),
+            p: (v.p===0 || v.p) ? String(v.p) : '',
+            s: STATUSES.indexOf(v.s)>-1 ? v.s : '미등록',
+            m: String(v.m||'').slice(0,300)
+          };
+        });
+      }
+      if(d && d.opts){
+        state.opts.extraShip = String(d.opts.extraShip||'');
+        state.opts.discount = String(d.opts.discount||'');
+      }
+      if(d && d.filters){
+        if(['All','Epic','Rare','Uncommon','Common','Showcase','Overnumber'].indexOf(d.filters.rar)>-1) state.filters.rar = d.filters.rar;
+        if(typeof d.filters.owned === 'boolean') state.filters.owned = d.filters.owned;
+        if(typeof d.filters.hideBanned === 'boolean') state.filters.hideBanned = d.filters.hideBanned;
+        if(['num','value','stock','name'].indexOf(d.filters.sort)>-1) state.filters.sort = d.filters.sort;
+      }
+    }catch(e){ /* 깨진 데이터는 무시 */ }
+  }
+  // UI 반영
+  document.getElementById('sort').value = state.filters.sort;
+  document.getElementById('ownedOnly').setAttribute('aria-pressed', state.filters.owned ? 'true':'false');
+  document.getElementById('hideBanned').setAttribute('aria-pressed', state.filters.hideBanned ? 'true':'false');
+  document.getElementById('optExtraShip').value = state.opts.extraShip;
+  document.getElementById('optDiscount').value = state.opts.discount;
+  syncRarChips();
+}
+
+function syncRarChips(){
+  var chips = document.querySelectorAll('#rarChips .chip');
+  for(var i=0;i<chips.length;i++){
+    chips[i].setAttribute('aria-pressed', chips[i].dataset.rar === state.filters.rar ? 'true':'false');
+  }
+}
+
+/* ---------------- 입력 처리 ---------------- */
+function onChange(e){
+  var t = e.target;
+  var row = t.closest ? t.closest('.row') : null;
+  if(!row) return;
+  var c = BY_ID[row.dataset.id];
+  if(!c) return;
+
+  var r = state.cards[c.id];
+  if(!r){ r = state.cards[c.id] = {q:0,f:0,p:'',s:'미등록',m:''}; }
+
+  if(t.classList.contains('num')){
+    var field = t.dataset.field;
+    var v = clampQty(t.value);
+    r[field] = v;
+    t.closest('.stepper').classList.toggle('is-zero', v===0);
+    updateRowValue(row, c);
+    updateSummary();
+    scheduleSave();
+    return;
+  }
+  if(t.classList.contains('price')){
+    r.p = t.value;
+    updateRowValue(row, c);
+    updateSummary();
+    scheduleSave();
+    return;
+  }
+  if(t.classList.contains('memo')){
+    r.m = t.value.slice(0,300);
+    scheduleSave();
+    return;
+  }
+  if(t.classList.contains('status')){
+    r.s = t.value;
+    t.dataset.v = r.s;
+    updateSummary();
+    scheduleSave();
+    return;
+  }
+}
+
+function onBlur(e){
+  var t = e.target;
+  var row = t.closest ? t.closest('.row') : null;
+  if(!row) return;
+  var c = BY_ID[row.dataset.id];
+  if(!c) return;
+  if(t.classList.contains('price')){
+    var p = parsePrice(t.value);
+    t.value = p>0 ? p.toFixed(2) : '';
+    var r = state.cards[c.id];
+    if(r){ r.p = t.value; }
+    updateRowValue(row, c);
+    updateSummary();
+    scheduleSave();
+  }
+  if(t.classList.contains('num')){
+    var q = clampQty(t.value);
+    t.value = String(q);
+    var r2 = state.cards[c.id];
+    if(r2){ r2[t.dataset.field] = q; }
+    updateRowValue(row, c);
+    updateSummary();
+    scheduleSave();
+  }
+}
+
+function onClick(e){
+  var btn = e.target.closest ? e.target.closest('[data-act]') : null;
+  if(!btn) return;
+  var row = btn.closest('.row');
+  if(!row) return;
+  var c = BY_ID[row.dataset.id];
+  if(!c) return;
+
+  var field = btn.dataset.field || 'q';
+  var r = state.cards[c.id];
+  if(!r){ r = state.cards[c.id] = {q:0,f:0,p:'',s:'미등록',m:''}; }
+
+  var cur = r[field] || 0;
+  var next = btn.dataset.act === 'inc' ? Math.min(cur+1, 9999) : Math.max(cur-1, 0);
+  r[field] = next;
+
+  var input = row.querySelector('.num[data-field="'+field+'"]');
+  if(input){
+    input.value = String(next);
+    var box = input.closest('.stepper');
+    if(box) box.classList.toggle('is-zero', next===0);
+  }
+
+  updateRowValue(row, c);
+  updateSummary();
+  scheduleSave();
+}
+
+/* ---------------- 내보내기 ---------------- */
+function exportList(){
+  var f = state.filters;
+  return sortCards(CARDS.filter(function(c){
+    if(!matches(c)) return false;
+    var r = rec(c.id);
+    return (r.q + r.f) > 0;
+  }));
+}
+
+function ebayTitle(c){
+  var t = 'Riftbound Origins KOREAN ' + c.en + ' ' + c.num + '/298 ' + c.rar;
+  return t.length > 80 ? t.slice(0,80) : t;
+}
+
+function csvCell(v){
+  return '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+}
+
+function buildCSV(){
+  var rows = exportList();
+  var head = ['카드번호','변형','영문명','한글명','희귀도','유형','영역','일반 수량','Foil 수량','단가 USD','금액 USD','등록 상태','이베이 제목','메모'];
+  var lines = [head.map(csvCell).join(',')];
+  rows.forEach(function(c){
+    var r = rec(c.id);
+    var p = priceOf(r);
+    lines.push([
+      c.num+'/298', c.variant || '일반', c.en, c.ko, RAR_KO[c.rar]||c.rar,
+      KIND_EN[c.kind]||c.kind, c.dom, r.q, r.f,
+      p ? p.toFixed(2) : '', ((r.q+r.f)*p).toFixed(2),
+      r.s, ebayTitle(c), r.m || ''
+    ].map(csvCell).join(','));
+  });
+  return { text:'\uFEFF'+lines.join('\r\n'), count:rows.length };
+}
+
+function buildListingText(){
+  var rows = exportList().filter(function(c){ return rec(c.id).s !== '품절' && priceOf(rec(c.id))>0; });
+  var skipped = exportList().filter(function(c){ return rec(c.id).s !== '품절' && priceOf(rec(c.id))<=0; }).length;
+  var totalKinds = exportList().length;
+
+  var L = [];
+  L.push('RIFTBOUND: ORIGINS (KOREAN) — CHOOSE YOUR CARD');
+  L.push('');
+  L.push('Official Korean-language printings. Pick any card below.');
+  L.push('Combined shipping: one shipping fee for any number of cards.');
+  L.push('');
+  L.push(rows.length + ' different cards available · OGN (Origins) · Korean');
+  L.push('');
+  L.push('------------------------------------------------------------');
+
+  rows.forEach(function(c, i){
+    var r = rec(c.id);
+    var n = String(i+1).padStart(2,'0');
+    var totalQty = r.q + r.f;
+    var stock = totalQty + ' available' + (r.f ? ' (' + r.f + ' foil)' : '');
+    var name = c.en + ' (' + c.ko + ')';
+    L.push(n + '. ' + name + ' — OGN ' + c.num + '/298 · ' + (KIND_EN[c.kind]||c.kind) + ' · ' + c.rar + ' · ' + stock + ' — ' + fmtUsd(priceOf(r)));
+  });
+
+  L.push('------------------------------------------------------------');
+  var disc = parseFloat(String(state.opts.discount).replace(/[^\d.]/g,''));
+  if(isFinite(disc) && disc>0) L.push('Buy 2 or more cards: ' + disc + '% off the card total.');
+  var ship = parseFloat(String(state.opts.extraShip).replace(/[^\d.]/g,''));
+  if(isFinite(ship) && ship>0) L.push('Shipping: $' + ship.toFixed(2) + ' for each additional card.');
+  L.push('');
+  L.push('Cards are shipped sleeved and in top loaders. Message me for bundles or any card not listed.');
+
+  return { text:L.join('\n'), count:rows.length, skipped:skipped, totalKinds:totalKinds };
+}
+
+function download(name, text, mime){
+  var blob = new Blob([text], {type: mime || 'text/plain;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+}
+
+function stamp(){
+  var d = new Date();
+  function p(n){ return String(n).padStart(2,'0'); }
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
+function doBackup(){
+  prune();
+  persist();
+  download('riftbound-inventory-'+stamp()+'.json', JSON.stringify(payload(), null, 2), 'application/json');
+  toast('JSON 백업을 내려받았어요');
+}
+
+function doCSV(){
+  var out = buildCSV();
+  if(out.count === 0){ toast('보유 수량이 있는 카드가 없어요'); return; }
+  download('riftbound-ebay-choose-your-card-'+stamp()+'.csv', out.text, 'text/csv;charset=utf-8');
+  toast('eBay CSV · '+out.count+'건 내보냈어요');
+}
+
+function copyText(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(text).then(function(){ return true; }).catch(function(){ return legacyCopy(text); });
+  }
+  return Promise.resolve(legacyCopy(text));
+}
+
+function legacyCopy(text){
+  try{
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly','');
+    ta.style.position = 'fixed';
+    ta.style.top = '-2000px';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    var ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  }catch(e){ return false; }
+}
+
+function doCopy(){
+  var out = buildListingText();
+  if(out.count === 0){
+    toast('가격이 입력된 보유 카드가 없어요 (단가를 먼저 넣어 주세요)');
+    return;
+  }
+  copyText(out.text).then(function(ok){
+    if(ok){
+      var msg = '가격표 '+out.count+'종 복사했어요';
+      if(out.skipped>0) msg += ' (가격 미입력 '+out.skipped+'종 제외)';
+      if(out.totalKinds>out.count+out.skipped) msg += ' · 품절 제외';
+      toast(msg);
+    } else {
+      toast('복사가 막혔어요. 파일로 내려받아 주세요');
+      download('riftbound-listing-'+stamp()+'.txt', out.text);
+    }
+  });
+}
+
+function doImportText(text){
+  var data;
+  try{ data = JSON.parse(text); }catch(e){ toast('JSON을 읽을 수 없어요'); return; }
+  if(!data || !data.cards || typeof data.cards !== 'object'){ toast('재고 백업 파일이 아니에요'); return; }
+
+  var n = 0;
+  Object.keys(data.cards).forEach(function(id){ if(BY_ID[id]) n++; });
+  if(n === 0){ toast('이 세트 카드 기록이 없어요'); return; }
+
+  if(!confirm('백업 파일의 카드 '+n+'종 기록으로 현재 재고를 덮어쓸까요?\n지금 화면의 기록은 사라집니다.')) return;
+
+  state.cards = {};
+  Object.keys(data.cards).forEach(function(id){
+    if(!BY_ID[id]) return;
+    var v = data.cards[id] || {};
+    state.cards[id] = {
+      q: clampQty(v.q), f: clampQty(v.f),
+      p: (v.p===0 || v.p) ? String(v.p) : '',
+      s: STATUSES.indexOf(v.s)>-1 ? v.s : '미등록',
+      m: String(v.m||'').slice(0,300)
+    };
+  });
+  if(data.opts){
+    state.opts.extraShip = String(data.opts.extraShip||'');
+    state.opts.discount = String(data.opts.discount||'');
+    document.getElementById('optExtraShip').value = state.opts.extraShip;
+    document.getElementById('optDiscount').value = state.opts.discount;
+  }
+  persist();
+  render();
+  toast(n+'종 기록을 불러왔어요');
+}
+
+/* ---------------- 이벤트 연결 ---------------- */
+function bind(){
+  var search = document.getElementById('search');
+  var raf = null;
+  search.addEventListener('input', function(){
+    state.query = search.value;
+    if(raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(function(){ render(); });
+  });
+  search.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ search.value=''; state.query=''; render(); search.blur(); }
+  });
+  document.getElementById('clearSearch').addEventListener('click', function(){
+    search.value=''; state.query=''; render(); search.focus();
+  });
+
+  document.getElementById('rarChips').addEventListener('click', function(e){
+    var chip = e.target.closest('.chip');
+    if(!chip || !chip.dataset.rar) return;
+    state.filters.rar = chip.dataset.rar;
+    syncRarChips();
+    scheduleSave();
+    render();
+  });
+
+  var owned = document.getElementById('ownedOnly');
+  owned.addEventListener('click', function(){
+    state.filters.owned = !state.filters.owned;
+    owned.setAttribute('aria-pressed', state.filters.owned?'true':'false');
+    scheduleSave(); render();
+  });
+
+  var hb = document.getElementById('hideBanned');
+  hb.addEventListener('click', function(){
+    state.filters.hideBanned = !state.filters.hideBanned;
+    hb.setAttribute('aria-pressed', state.filters.hideBanned?'true':'false');
+    scheduleSave(); render();
+  });
+
+  document.getElementById('resetFilters').addEventListener('click', function(){
+    state.filters = {rar:'All', owned:false, hideBanned:true, sort:'num'};
+    state.query = '';
+    search.value = '';
+    document.getElementById('sort').value = 'num';
+    document.getElementById('ownedOnly').setAttribute('aria-pressed','false');
+    document.getElementById('hideBanned').setAttribute('aria-pressed','true');
+    syncRarChips();
+    scheduleSave(); render();
+  });
+
+  document.getElementById('sort').addEventListener('change', function(e){
+    state.filters.sort = e.target.value;
+    scheduleSave(); render();
+  });
+
+  ['optExtraShip','optDiscount'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('input', function(){
+      state.opts[id === 'optExtraShip' ? 'extraShip' : 'discount'] = el.value;
+      scheduleSave();
+    });
+  });
+
+  listEl.addEventListener('input', onChange);
+  listEl.addEventListener('change', onChange);
+  listEl.addEventListener('blur', onBlur, true);
+  listEl.addEventListener('click', onClick);
+
+  document.getElementById('btnJson').addEventListener('click', doBackup);
+  document.getElementById('btnCsv').addEventListener('click', doCSV);
+  document.getElementById('btnCopy').addEventListener('click', doCopy);
+
+  var file = document.getElementById('importFile');
+  document.getElementById('btnImport').addEventListener('click', function(){ file.click(); });
+  file.addEventListener('change', function(){
+    var f = file.files && file.files[0];
+    if(!f) return;
+    var reader = new FileReader();
+    reader.onload = function(){ doImportText(String(reader.result||'')); file.value=''; };
+    reader.readAsText(f, 'utf-8');
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key === '/' && document.activeElement !== search){
+      e.preventDefault(); search.focus(); search.select();
+    }
+  });
+
+  document.addEventListener('dragover', function(e){ e.preventDefault(); });
+  document.addEventListener('drop', function(e){
+    if(!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+    e.preventDefault();
+    var f = e.dataTransfer.files[0];
+    if(f.type && f.type.indexOf('json') === -1 && !/\.json$/i.test(f.name)){ toast('JSON 파일만 불러올 수 있어요'); return; }
+    var reader = new FileReader();
+    reader.onload = function(){ doImportText(String(reader.result||'')); };
+    reader.readAsText(f, 'utf-8');
+  });
+
+  window.addEventListener('beforeunload', function(){
+    if(saveTimer){ clearTimeout(saveTimer); prune(); persist(); }
+  });
+}
+
+/* ---------------- 시작 ---------------- */
+(function init(){
+  // 희귀도 칩 개수
+  var counts = {All:CARDS.length};
+  CARDS.forEach(function(c){ counts[c.rar] = (counts[c.rar]||0)+1; });
+  var chips = document.querySelectorAll('#rarChips .chip');
+  for(var i=0;i<chips.length;i++){
+    var b = chips[i].querySelector('b');
+    if(b) b.textContent = String(counts[chips[i].dataset.rar] || 0);
+  }
+
+  load();
+  bind();
+  render();
+  setSaveState(storageOK ? 'saved' : 'error');
+})();
+</script>
+</body>
+</html>
