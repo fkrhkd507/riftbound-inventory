@@ -547,7 +547,7 @@
     </div>
     <div class="chips toggles">
       <button class="chip toggle" id="ownedOnly" aria-pressed="false">보유 카드만</button>
-      <button class="chip toggle banned" id="hideBanned" aria-pressed="true">밴 카드 제외 <b id="banCount">2</b></button>
+      <button class="chip toggle banned" id="hideBanned" aria-pressed="false">밴 카드 제외 <b id="banCount">2</b></button>
       <button class="chip" id="resetFilters">필터 초기화</button>
     </div>
     <div class="spacer"></div>
@@ -608,7 +608,7 @@
     <br><b>금액</b> — (일반 보유 + Foil 보유) × 단가로 계산하고, 순수익은 이베이 수수료 약 14%를 뺀 값입니다. 실제 정산은 카테고리·셀러 등급에 따라 조금 다릅니다.
     <br><b>수량 칸</b> — Rare·Epic·Showcase·Overnumber는 부스터 팩에서 Foil로만 나오므로 <b>Foil 수량 칸 하나만</b> 표시합니다. 예전에 일반 수량으로 넣어 둔 값은 페이지를 열 때 Foil 수량으로 합산됩니다.
     <br><b>카드 데이터</b> — Riftbound: Origins(OGN) 298장 + 대체 아트 30장 + 오버넘버 12장. 카드명·번호는 <a href="https://decks.kr/cards/set/ogn" target="_blank" rel="noopener">decks.kr</a> 한글판 표기, 희귀도는 <a href="https://riftwatch.gg/sets/ogn/" target="_blank" rel="noopener">Riftwatch</a>·CardOwners 대조. 2026-11-17 기준.
-    <br><b>밴</b> — 미끼 갈고리(242)·눈부신 오로라(160)는 글로벌 스탠다드 밴 카드라 목록에서 표시만 하고, 필요하면 ‘밴 카드 제외’로 숨깁니다.
+    <br><b>밴</b> — 미끼 갈고리(242)·눈부신 오로라(160)는 글로벌 스탠다드 밴 카드입니다. 기본 화면에는 <b>BANNED</b> 배지와 함께 그대로 보이고, 판매할 때 걸러내고 싶으면 ‘밴 카드 제외’를 눌러 숨깁니다.
   </footer>
 </div>
 
@@ -1013,7 +1013,7 @@ const LS_KEY = 'riftbound-inventory-v1';
 var state = {
   cards:{},
   opts:{extraShip:'', discount:''},
-  filters:{rar:'All', owned:false, hideBanned:true, sort:'num'},
+  filters:{rar:'All', owned:false, hideBanned:false, sort:'num'},
   query:''
 };
 
@@ -1258,7 +1258,7 @@ function prune(){
 function payload(){
   return {
     app:'riftbound-inventory',
-    version:1,
+    version:2,
     savedAt:new Date().toISOString(),
     cards:state.cards,
     opts:state.opts,
@@ -1322,7 +1322,8 @@ function load(){
       if(d && d.filters){
         if(['All','Epic','Rare','Uncommon','Common','Showcase','Overnumber'].indexOf(d.filters.rar)>-1) state.filters.rar = d.filters.rar;
         if(typeof d.filters.owned === 'boolean') state.filters.owned = d.filters.owned;
-        if(typeof d.filters.hideBanned === 'boolean') state.filters.hideBanned = d.filters.hideBanned;
+        /* v1은 ‘밴 카드 제외’가 기본 켜짐이라 저장된 true는 기본값일 뿐 → v2부터 사용자가 직접 켠 값만 복원 */
+        if(d.version >= 2 && typeof d.filters.hideBanned === 'boolean') state.filters.hideBanned = d.filters.hideBanned;
         if(['num','value','stock','name'].indexOf(d.filters.sort)>-1) state.filters.sort = d.filters.sort;
       }
     }catch(e){ /* 깨진 데이터는 무시 */ }
@@ -1658,12 +1659,12 @@ function bind(){
   });
 
   document.getElementById('resetFilters').addEventListener('click', function(){
-    state.filters = {rar:'All', owned:false, hideBanned:true, sort:'num'};
+    state.filters = {rar:'All', owned:false, hideBanned:false, sort:'num'};
     state.query = '';
     search.value = '';
     document.getElementById('sort').value = 'num';
     document.getElementById('ownedOnly').setAttribute('aria-pressed','false');
-    document.getElementById('hideBanned').setAttribute('aria-pressed','true');
+    document.getElementById('hideBanned').setAttribute('aria-pressed','false');
     syncRarChips();
     scheduleSave(); render();
   });
