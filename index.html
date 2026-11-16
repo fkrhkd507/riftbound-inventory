@@ -363,11 +363,11 @@
   .chip.scan:hover{background:rgba(102,166,255,.22);border-color:rgba(102,166,255,.62);color:#e6efff}
   .chip.scan .ic{font-size:14px;line-height:1}
 
-  .scan{
+  .scanner{
     position:fixed;inset:0;z-index:130;display:none;flex-direction:column;
     background:#04060a;color:#fff;
   }
-  .scan.open{display:flex}
+  .scanner.open{display:flex}
   .scan-bar{
     flex:none;display:flex;align-items:flex-start;gap:10px;
     padding:calc(8px + env(safe-area-inset-top)) 12px 8px;
@@ -744,7 +744,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <!-- 카메라 카드 스캔 (전체 화면) -->
-<div class="scan" id="scanModal" role="dialog" aria-modal="true" aria-label="카메라 카드 스캔" aria-hidden="true">
+<div class="scanner" id="scanModal" role="dialog" aria-modal="true" aria-label="카메라 카드 스캔" aria-hidden="true">
   <div class="scan-bar">
     <div class="scan-title">📷 카드 하단 번호 스캔<small id="scanHint">박스 안에 번호가 오도록 비추면 자동으로 읽어요</small></div>
     <button class="scan-close" id="scanClose" type="button" aria-label="스캔 닫기">✕</button>
